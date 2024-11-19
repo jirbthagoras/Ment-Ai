@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
 import doctorImage from '../assets/psikiater.png';
-import owlImage from '../assets/mascot.png';
+import mascot from '@/assets/mascot.png';
 
 const ConsultationSection = () => {
   return (
@@ -93,7 +93,7 @@ const ConsultationSection = () => {
                 className="absolute inset-0 rounded-[32px] overflow-hidden"
               >
                 <img 
-                  src={owlImage} 
+                  src={mascot} 
                   alt="Dr.Men Owl" 
                   className="w-full h-full object-cover" 
                 />
