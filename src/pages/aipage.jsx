@@ -1,26 +1,61 @@
-import React, { useState } from "react"
-import { IoArrowBack, IoSend, IoSparkles } from "react-icons/io5"
-import { FaHeart } from "react-icons/fa"
-import { motion, AnimatePresence } from "framer-motion"
-import { useNavigate } from "react-router-dom"
+import React, { useState } from "react";
+import { IoArrowBack, IoSend, IoSparkles } from "react-icons/io5";
+import { FaHeart } from "react-icons/fa";
+import { motion, AnimatePresence } from "framer-motion";
+import { useNavigate } from "react-router-dom";
+import Groq from "groq-sdk";
+
+const groq = new Groq({ apiKey: "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", dangerouslyAllowBrowser: true });
 
 export default function AiPage() {
-  const [message, setMessage] = useState("")
+  const [message, setMessage] = useState("");
   const [chatMessages, setChatMessages] = useState([
-    { id: 1, sender: "Dr. Men", text: "Hai sobat! bagaimana kabarmu kali ini, aku harap kamu baik - baik sajaa! adakah yang ingin kamu ceritakan padaku?" },
+    {
+      id: 1,
+      sender: "Dr. Men",
+      text: "Hai sobat! bagaimana kabarmu kali ini, aku harap kamu baik - baik sajaa! adakah yang ingin kamu ceritakan padaku?",
+    },
     { id: 2, sender: "Sobat Cerita", text: "Hai dr, apa kabar!?" },
-  ])
+  ]);
 
-  const navigate = useNavigate()
+  const navigate = useNavigate();
 
-  const handleSendMessage = () => {
+  const handleSendMessage = async () => {
     if (message.trim()) {
-      setChatMessages([...chatMessages, { id: chatMessages.length + 1, sender: "Sobat Cerita", text: message }])
-      setMessage("")
+      const newMessages = [...chatMessages, { id: chatMessages.length + 1, sender: "Sobat Cerita", text: message }];
+      setChatMessages(newMessages);
+      setMessage("");
+
+      // Call Groq API to get AI response
+      try {
+        const response = await groq.chat.completions.create({
+          messages: [
+            { role: "system", content: "Nama anda adalah Dr. Men, anda adalah seorang Dr sekaligus teman pendengar para pasien dengan kebutuhan mental khusus, gunakan bahasa Indonesia yang baik dan benar." },
+            ...newMessages.map((msg) => ({
+              role: msg.sender === "Dr. Men" ? "assistant" : "user",
+              content: msg.text,
+            })),
+          ],
+          model: "llama3-8b-8192",
+        });
+
+        const aiReply = response.choices[0]?.message?.content || "Maaf, saya tidak bisa merespon saat ini.";
+
+        setChatMessages([
+          ...newMessages,
+          { id: newMessages.length + 1, sender: "Dr. Men", text: aiReply },
+        ]);
+      } catch (error) {
+        console.error("Error fetching AI response:", error);
+        setChatMessages([
+          ...newMessages,
+          { id: newMessages.length + 1, sender: "Dr. Men", text: "Maaf, terjadi kesalahan saat mencoba memberikan tanggapan." },
+        ]);
+      }
     } else {
-      alert("Please enter a message.")
+      alert("Please enter a message.");
     }
-  }
+  };
 
   return (
     <motion.div
@@ -82,11 +117,10 @@ export default function AiPage() {
                   placeholder="Haii, apa yang kamu rasakan hari ini sobat?"
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
+                  onKeyPress={(e) => e.key === "Enter" && handleSendMessage()}
                   className="w-full bg-white rounded-xl border-0 pr-14 py-3 text-gray-800 placeholder-gray-500 shadow-lg block"
                   aria-label="Message input"
                 />
-                            {/* <input type="tel" id="phone" className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" placeholder="123-45-678" pattern="[0-9]{3}-[0-9]{2}-[0-9]{3}" required /> */}
                 <button
                   onClick={handleSendMessage}
                   className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8 rounded-full bg-white/80 hover:bg-white/90"
@@ -137,7 +171,7 @@ export default function AiPage() {
             <motion.img
               whileHover={{ scale: 1.05 }}
               transition={{ type: "spring", stiffness: 400, damping: 10 }}
-              src="src\assets\Mascot.png"
+              src="src/assets/Mascot.png"
               alt="Dr. Men - Owl Doctor Character"
               className="ml-20 w-250 h-250 drop-shadow-xl mb-4"
             />
@@ -155,5 +189,5 @@ export default function AiPage() {
         </div>
       </div>
     </motion.div>
-  )
+  );
 }
