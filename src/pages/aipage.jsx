@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import Groq from "groq-sdk";
 
-const groq = new Groq({ apiKey: "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", dangerouslyAllowBrowser: true });
+const groq = new Groq({ apiKey: import.meta.env.VITE_GROQ_KEY, dangerouslyAllowBrowser: true });
 
 export default function AiPage() {
   const [message, setMessage] = useState("");
