@@ -1,32 +1,23 @@
 import { useState, useEffect } from 'react';
-import logo from '../assets/logo.png';
+import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion';
 import depresiImg from '../assets/mood/Depresi.png';
 import kecanduanImg from '../assets/mood/Kecanduan.png';
 import moodswingImg from '../assets/mood/MoodSwing.png';
 import stressImg from '../assets/mood/Stress.png';
 import traumaImg from '../assets/mood/Trauma.png';
-import { motion, AnimatePresence, useScroll, useTransform, useSpring } from 'framer-motion';
 import ConsultationSection from '../sections/ConsultationSection';
 import Footer from '../components/Footer';
+import Navbar from '../components/Navbar';
 
-function Home() {
+export default function Home() {
   const [selectedCondition, setSelectedCondition] = useState(null);
   const [scrolled, setScrolled] = useState(false);
   const { scrollYProgress } = useScroll();
   const [hoveredCard, setHoveredCard] = useState(null);
 
-  // Parallax effect for hero text
   const y = useTransform(scrollYProgress, [0, 1], [0, 200]);
   const opacity = useTransform(scrollYProgress, [0, 0.3], [1, 0]);
-  
-  // Enhanced scroll progress
-  const scaleX = useSpring(scrollYProgress, {
-    stiffness: 100,
-    damping: 30,
-    restDelta: 0.001
-  });
 
-  // Enhanced animations
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -85,7 +76,6 @@ function Home() {
     }
   };
 
-  // Card background animation
   const cardBgVariants = {
     hover: {
       scale: 1.2,
@@ -98,7 +88,6 @@ function Home() {
     }
   };
 
-  // Scroll progress indicator
   useEffect(() => {
     const handleScroll = () => {
       setScrolled(window.scrollY > 50);
@@ -147,46 +136,14 @@ function Home() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#FFA7D0] via-[#1E498E] to-[#A0A9FF] font-jakarta">
-      {/* Scroll Progress Bar */}
-      <motion.div
-        className="fixed top-0 left-0 right-0 h-1 bg-pink-500 z-50 origin-left"
-        style={{ scaleX }}
-      />
+      <Navbar />
 
-      {/* Enhanced Navigation */}
-      <motion.nav 
-        className={`fixed w-full z-40 transition-all duration-300 ${
-          scrolled ? 'bg-white/10 backdrop-blur-md shadow-lg' : ''
-        }`}
-        initial={{ y: -100 }}
-        animate={{ y: 0 }}
-        transition={{ type: "spring", stiffness: 100 }}
-      >
-        <div className="container mx-auto flex justify-between items-center">
-          <div className="flex items-center">
-            <img 
-              src={logo} 
-              alt="Ment'Ai Logo" 
-              className="h-12 w-auto"
-            />
-          </div>
-          <div className="space-x-6">
-            <a href="#" className="text-blue-900 font-medium hover:text-blue-700">Home</a>
-            <a href="#" className="text-blue-900 font-medium hover:text-blue-700">About</a>
-            <a href="#" className="text-blue-900 font-medium hover:text-blue-700">Layanan Konsultasi</a>
-            <a href="#" className="text-blue-900 font-medium hover:text-blue-700">DrMen</a>
-          </div>
-        </div>
-      </motion.nav>
-
-      {/* First Section - Full Screen with Cards */}
       <motion.div 
         className="relative min-h-screen overflow-hidden"
         variants={containerVariants}
         initial="hidden"
         animate="visible"
       >
-        {/* Animated background particles */}
         <motion.div className="absolute inset-0 pointer-events-none">
           {[...Array(20)].map((_, i) => (
             <motion.div
@@ -209,17 +166,15 @@ function Home() {
           ))}
         </motion.div>
 
-        {/* Main Content Container */}
         <div className="container mx-auto px-4 min-h-screen">
-          {/* Hero Section with Cards */}
-          <div className="pt-32 pb-16"> {/* Added padding to account for fixed nav */}
+          <div className="pt-32 pb-16">
             <motion.div 
               className="flex flex-col justify-center"
               style={{ y, opacity }}
             >
               <motion.h1 
                 variants={heroTextVariants}
-                className="text-6xl font-bold text-white mb-2 relative"
+                className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-2 relative"
               >
                 Haii Sobat Mentai,
                 <motion.span 
@@ -233,7 +188,7 @@ function Home() {
               </motion.h1>
               <motion.h2 
                 variants={heroTextVariants}
-                className="text-4xl font-bold text-white mb-6 relative"
+                className="text-2xl md:text-3xl lg:text-4xl font-bold text-white mb-6 relative"
               >
                 Bagaimana Kabar Kamu Hari Ini?
                 <motion.span 
@@ -247,7 +202,7 @@ function Home() {
               </motion.h2>
               <motion.p 
                 variants={heroTextVariants}
-                className="text-2xl text-white mb-12 relative"
+                className="text-xl md:text-2xl text-white mb-12 relative"
               >
                 Kenali perasaan mu
                 <motion.span 
@@ -260,9 +215,8 @@ function Home() {
                 />
               </motion.p>
 
-              {/* Condition Cards Grid */}
               <motion.div 
-                className="grid grid-cols-5 gap-6 mb-8" // Added margin bottom
+                className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 md:gap-6 mb-8"
                 variants={cardContainerVariants}
               >
                 {conditions.map((condition) => (
@@ -273,7 +227,7 @@ function Home() {
                     onClick={() => setSelectedCondition(condition.name)}
                     onHoverStart={() => setHoveredCard(condition.id)}
                     onHoverEnd={() => setHoveredCard(null)}
-                    className={`relative h-64 overflow-hidden rounded-[32px] transition-all duration-300
+                    className={`relative h-48 md:h-64 overflow-hidden rounded-[32px] transition-all duration-300
                       ${selectedCondition === condition.name ? 'ring-4 ring-white/50' : ''}
                       group shadow-lg backdrop-blur-sm`}
                   >
@@ -282,7 +236,6 @@ function Home() {
                       variants={cardBgVariants}
                     />
                     
-                    {/* Enhanced Card Content */}
                     <motion.div 
                       className="absolute inset-0 flex items-center justify-center"
                       variants={cardBgVariants}
@@ -294,7 +247,6 @@ function Home() {
                       />
                     </motion.div>
                     
-                    {/* Original Gradient */}
                     <div 
                       className="absolute bottom-0 left-0 right-0 h-1/2 bg-gradient-to-t from-[#001E81] to-transparent"
                       style={{
@@ -302,20 +254,18 @@ function Home() {
                       }}
                     />
                     
-                    {/* Enhanced Text Content */}
                     <motion.div 
-                      className="absolute bottom-0 left-0 right-0 p-6"
+                      className="absolute bottom-0 left-0 right-0 p-4 md:p-6"
                       whileHover={{ y: -5 }}
                     >
                       <motion.span 
-                        className="text-white text-2xl font-medium block"
+                        className="text-white text-lg md:text-2xl font-medium block"
                         whileHover={{ scale: 1.05 }}
                       >
                         {condition.name}
                       </motion.span>
                     </motion.div>
 
-                    {/* Hover Indicator */}
                     <motion.div
                       className="absolute top-4 right-4 w-3 h-3 rounded-full bg-white opacity-0 group-hover:opacity-100"
                       initial={{ scale: 0 }}
@@ -328,7 +278,6 @@ function Home() {
             </motion.div>
           </div>
 
-          {/* Description Section - Now Below Cards */}
           <AnimatePresence mode="wait">
             {selectedCondition && (
               <motion.div 
@@ -337,24 +286,21 @@ function Home() {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -30 }}
                 transition={{ type: "spring", stiffness: 200, damping: 20 }}
-                className="mb-16" // Added margin bottom
+                className="mb-16"
               >
-                {/* Title with Gradient Text */}
                 <motion.h2 
                   initial={{ opacity: 0, x: -50 }}
                   animate={{ opacity: 1, x: 0 }}
-                  className="text-3xl font-bold mb-6 uppercase bg-clip-text text-transparent bg-gradient-to-r from-white to-pink-300"
+                  className="text-2xl md:text-3xl font-bold mb-6 uppercase bg-clip-text text-transparent bg-gradient-to-r from-white to-pink-300"
                 >
                   {selectedCondition}
                 </motion.h2>
 
-                {/* Enhanced Description Card */}
                 <motion.div 
-                  className="bg-white/10 backdrop-blur-md rounded-2xl p-8 shadow-xl relative overflow-hidden"
+                  className="bg-white/10 backdrop-blur-md rounded-2xl p-6 md:p-8 shadow-xl relative overflow-hidden"
                   whileHover={{ scale: 1.01 }}
                   transition={{ type: "spring", stiffness: 400 }}
                 >
-                  {/* Animated Background Elements */}
                   <motion.div 
                     className="absolute inset-0 bg-gradient-to-r from-pink-500/5 to-purple-500/5"
                     animate={{
@@ -367,10 +313,9 @@ function Home() {
                     }}
                   />
 
-                  {/* Content */}
                   <div className="relative z-10">
                     <motion.p 
-                      className="text-white text-lg mb-8 leading-relaxed"
+                      className="text-white text-base md:text-lg mb-8 leading-relaxed"
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       transition={{ delay: 0.2 }}
@@ -378,14 +323,20 @@ function Home() {
                       {conditions.find(c => c.name === selectedCondition)?.description}
                     </motion.p>
 
-                    {/* Symptoms Grid */}
-                    <div className="grid grid-cols-2 gap-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-6">
                       {conditions.find(c => c.name === selectedCondition)?.symptoms.map((symptom, index) => (
                         <motion.div
                           key={symptom}
-                          initial={{ opacity: 0, x: -20 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          transition={{ delay: index * 0.1 }}
+                          initial={{ opacity: 0,
+                            x: -20
+                          }}
+                          animate={{
+                            opacity: 1,
+                            x: 0
+                          }}
+                          transition={{
+                            delay: index * 0.1
+                          }}
                           className="flex items-center space-x-3 group"
                         >
                           <motion.div
@@ -399,21 +350,20 @@ function Home() {
                               delay: index * 0.2
                             }}
                           />
-                          <span className="text-white group-hover:text-pink-300 transition-colors">
+                          <span className="text-white text-sm md:text-base group-hover:text-pink-300 transition-colors">
                             {symptom}
                           </span>
                         </motion.div>
                       ))}
                     </div>
 
-                    {/* Enhanced CTA Button */}
                     <motion.div 
                       className="mt-8 text-center"
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
                     >
                       <motion.button 
-                        className="bg-gradient-to-r from-pink-500 to-purple-500 text-white px-8 py-3 rounded-full font-medium relative overflow-hidden group"
+                        className="bg-gradient-to-r from-pink-500 to-purple-500 text-white px-6 md:px-8 py-2 md:py-3 rounded-full text-sm md:text-base font-medium relative overflow-hidden group"
                         whileHover={{ boxShadow: "0 0 20px rgba(255,167,208,0.5)" }}
                       >
                         <span className="relative z-10">Konsultasi Sekarang</span>
@@ -433,15 +383,11 @@ function Home() {
         </div>
       </motion.div>
 
-      {/* Consultation Section - Starts after full screen */}
       <div className="relative z-10 bg-transparent">
         <ConsultationSection />
       </div>
 
-      {/* Footer */}
       <Footer />
     </div>
   );
 }
-
-export default Home;
