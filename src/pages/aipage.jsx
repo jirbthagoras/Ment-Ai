@@ -23,22 +23,22 @@ export default function AiPage() {
   }
 
   return (
-    <motion.div 
+    <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.5 }}
       className="min-h-screen bg-gradient-to-b from-pink-300 via-purple-400 to-blue-600 p-6"
     >
       <div className="max-w-4xl mx-auto">
-        <motion.a 
+        <motion.a
           onClick={() => navigate(-1)}
           initial={{ x: -20, opacity: 0 }}
           animate={{ x: 0, opacity: 1 }}
           transition={{ delay: 0.2 }}
           className="inline-flex items-center text-indigo-900 hover:text-indigo-700 mb-6 cursor-pointer"
         >
-          <IoArrowBack className="w-4 h-4 mr-1" />
-          <span className="text-sm italic">Kembali</span>
+          {/* <IoArrowBack className="w-4 h-4 mr-1" /> */}
+          {/* <span className="text-sm italic">Kembali</span> */}
         </motion.a>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -70,7 +70,7 @@ export default function AiPage() {
               ))}
             </AnimatePresence>
 
-            <motion.div 
+            <motion.div
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ delay: 0.5 }}
@@ -83,9 +83,10 @@ export default function AiPage() {
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
                   onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
-                  className="w-full bg-white rounded-full border-0 pr-12 py-3 text-gray-800 placeholder-gray-500 shadow-lg"
+                  className="w-full bg-white rounded-xl border-0 pr-14 py-3 text-gray-800 placeholder-gray-500 shadow-lg block"
                   aria-label="Message input"
                 />
+                            {/* <input type="tel" id="phone" className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" placeholder="123-45-678" pattern="[0-9]{3}-[0-9]{2}-[0-9]{3}" required /> */}
                 <button
                   onClick={handleSendMessage}
                   className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8 rounded-full bg-white/80 hover:bg-white/90"
@@ -97,19 +98,19 @@ export default function AiPage() {
             </motion.div>
           </div>
 
-          <motion.div 
+          <motion.div
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={{ delay: 0.3, type: "spring", stiffness: 260, damping: 20 }}
             className="flex flex-col items-center justify-center relative"
           >
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
-              <motion.div 
-                animate={{ 
+              <motion.div
+                animate={{
                   scale: [1, 1.2, 1],
                   rotate: [0, 10, -10, 0],
                 }}
-                transition={{ 
+                transition={{
                   repeat: Infinity,
                   repeatType: "reverse",
                   duration: 2,
@@ -118,11 +119,11 @@ export default function AiPage() {
               >
                 <IoSparkles />
               </motion.div>
-              <motion.div 
-                animate={{ 
+              <motion.div
+                animate={{
                   scale: [1, 1.1, 1],
                 }}
-                transition={{ 
+                transition={{
                   repeat: Infinity,
                   repeatType: "reverse",
                   duration: 1.5,
@@ -132,7 +133,7 @@ export default function AiPage() {
                 <FaHeart />
               </motion.div>
             </div>
-            
+
             <motion.img
               whileHover={{ scale: 1.05 }}
               transition={{ type: "spring", stiffness: 400, damping: 10 }}
@@ -140,8 +141,8 @@ export default function AiPage() {
               alt="Dr. Men - Owl Doctor Character"
               className="ml-20 w-250 h-250 drop-shadow-xl mb-4"
             />
-            
-            <motion.div 
+
+            <motion.div
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ delay: 0.6 }}

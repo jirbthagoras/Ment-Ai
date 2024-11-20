@@ -29,12 +29,12 @@ const Navbar = () => {
   }, []);
 
   const menuVariants = {
-    hidden: { 
-      opacity: 0, 
-      x: '100%' 
+    hidden: {
+      opacity: 0,
+      x: '100%'
     },
-    visible: { 
-      opacity: 1, 
+    visible: {
+      opacity: 1,
       x: 0,
       transition: {
         type: 'spring',
@@ -42,8 +42,8 @@ const Navbar = () => {
         damping: 30
       }
     },
-    exit: { 
-      opacity: 0, 
+    exit: {
+      opacity: 0,
       x: '100%',
       transition: {
         duration: 0.2
@@ -63,7 +63,7 @@ const Navbar = () => {
       />
 
       {/* Enhanced Responsive Navigation */}
-      <motion.nav 
+      <motion.nav
         className={`fixed w-full z-40 transition-all duration-300 ${scrolled ? 'bg-white/10 backdrop-blur-md shadow-lg' : ''}`}
         initial={{ y: -100, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
@@ -72,24 +72,24 @@ const Navbar = () => {
         <div className="container mx-auto flex justify-between items-center py-4 px-4">
           {/* Logo */}
           <div className="flex items-center">
-            <img 
-              src={logo} 
-              alt="Ment'Ai Logo" 
+            <img
+              src={logo}
+              alt="Ment'Ai Logo"
               className="h-12 w-auto"
             />
           </div>
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex space-x-6">
-            <a href="#" className="text-blue-900 font-medium hover:text-blue-700">Home</a>
+            <a href="/" className="text-blue-900 font-medium hover:text-blue-700">Home</a>
             <a href="#" className="text-blue-900 font-medium hover:text-blue-700">About</a>
             <a href="#" className="text-blue-900 font-medium hover:text-blue-700">Layanan Konsultasi</a>
-            <a href="#" className="text-blue-900 font-medium hover:text-blue-700">DrMen</a>
+            <a href="/aipage" className="text-blue-900 font-medium hover:text-blue-700">DrMen</a>
           </div>
 
           {/* Mobile Menu Toggle */}
           <div className="md:hidden">
-            <button 
+            <button
               onClick={toggleMenu}
               className="text-blue-900 focus:outline-none"
             >
@@ -117,29 +117,29 @@ const Navbar = () => {
               exit="exit"
             >
               <div className="flex flex-col items-center space-y-6">
-                <a 
-                  href="#" 
+                <a
+                  href="#"
                   className="text-blue-900 font-medium text-xl"
                   onClick={closeMenu}
                 >
                   Home
                 </a>
-                <a 
-                  href="#" 
+                <a
+                  href="#"
                   className="text-blue-900 font-medium text-xl"
                   onClick={closeMenu}
                 >
                   About
                 </a>
-                <a 
-                  href="#" 
+                <a
+                  href="#"
                   className="text-blue-900 font-medium text-xl"
                   onClick={closeMenu}
                 >
                   Layanan Konsultasi
                 </a>
-                <a 
-                  href="#" 
+                <a
+                  href="#"
                   className="text-blue-900 font-medium text-xl"
                   onClick={closeMenu}
                 >

@@ -138,7 +138,7 @@ export default function Home() {
     <div className="min-h-screen bg-gradient-to-b from-[#FFA7D0] via-[#1E498E] to-[#A0A9FF] font-jakarta">
       <Navbar />
 
-      <motion.div 
+      <motion.div
         className="relative min-h-screen overflow-hidden"
         variants={containerVariants}
         initial="hidden"
@@ -168,16 +168,16 @@ export default function Home() {
 
         <div className="container mx-auto px-4 min-h-screen">
           <div className="pt-32 pb-16">
-            <motion.div 
+            <motion.div
               className="flex flex-col justify-center"
               style={{ y, opacity }}
             >
-              <motion.h1 
+              <motion.h1
                 variants={heroTextVariants}
                 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-2 relative"
               >
                 Haii Sobat Mentai,
-                <motion.span 
+                <motion.span
                   className="absolute -left-4 -top-4 w-20 h-20 bg-pink-500/10 rounded-full blur-xl"
                   animate={{
                     scale: [1, 1.2, 1],
@@ -186,12 +186,12 @@ export default function Home() {
                   transition={{ duration: 4, repeat: Infinity }}
                 />
               </motion.h1>
-              <motion.h2 
+              <motion.h2
                 variants={heroTextVariants}
                 className="text-2xl md:text-3xl lg:text-4xl font-bold text-white mb-6 relative"
               >
                 Bagaimana Kabar Kamu Hari Ini?
-                <motion.span 
+                <motion.span
                   className="absolute -left-4 -top-4 w-20 h-20 bg-pink-500/10 rounded-full blur-xl"
                   animate={{
                     scale: [1, 1.2, 1],
@@ -200,12 +200,12 @@ export default function Home() {
                   transition={{ duration: 4, repeat: Infinity }}
                 />
               </motion.h2>
-              <motion.p 
+              <motion.p
                 variants={heroTextVariants}
                 className="text-xl md:text-2xl text-white mb-12 relative"
               >
                 Kenali perasaan mu
-                <motion.span 
+                <motion.span
                   className="absolute -left-4 -top-4 w-20 h-20 bg-pink-500/10 rounded-full blur-xl"
                   animate={{
                     scale: [1, 1.2, 1],
@@ -215,7 +215,7 @@ export default function Home() {
                 />
               </motion.p>
 
-              <motion.div 
+              <motion.div
                 className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 md:gap-6 mb-8"
                 variants={cardContainerVariants}
               >
@@ -231,34 +231,34 @@ export default function Home() {
                       ${selectedCondition === condition.name ? 'ring-4 ring-white/50' : ''}
                       group shadow-lg backdrop-blur-sm`}
                   >
-                    <motion.div 
+                    <motion.div
                       className="absolute inset-0 bg-gradient-to-b from-transparent via-blue-500/10 to-blue-600/20"
                       variants={cardBgVariants}
                     />
-                    
-                    <motion.div 
+
+                    <motion.div
                       className="absolute inset-0 flex items-center justify-center"
                       variants={cardBgVariants}
                     >
-                      <img 
-                        src={condition.image} 
+                      <img
+                        src={condition.image}
                         alt={condition.name}
-                        className="w-full h-full object-contain p-4 transition-transform duration-300" 
+                        className="w-full h-full object-contain p-4 transition-transform duration-300"
                       />
                     </motion.div>
-                    
-                    <div 
+
+                    <div
                       className="absolute bottom-0 left-0 right-0 h-1/2 bg-gradient-to-t from-[#001E81] to-transparent"
                       style={{
                         background: 'linear-gradient(to top, rgba(0, 30, 129, 0.8) 20%, rgba(0, 30, 129, 0.5) 70%, transparent 100%)'
                       }}
                     />
-                    
-                    <motion.div 
+
+                    <motion.div
                       className="absolute bottom-0 left-0 right-0 p-4 md:p-6"
                       whileHover={{ y: -5 }}
                     >
-                      <motion.span 
+                      <motion.span
                         className="text-white text-lg md:text-2xl font-medium block"
                         whileHover={{ scale: 1.05 }}
                       >
@@ -280,7 +280,7 @@ export default function Home() {
 
           <AnimatePresence mode="wait">
             {selectedCondition && (
-              <motion.div 
+              <motion.div
                 key={selectedCondition}
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -288,7 +288,7 @@ export default function Home() {
                 transition={{ type: "spring", stiffness: 200, damping: 20 }}
                 className="mb-16"
               >
-                <motion.h2 
+                <motion.h2
                   initial={{ opacity: 0, x: -50 }}
                   animate={{ opacity: 1, x: 0 }}
                   className="text-2xl md:text-3xl font-bold mb-6 uppercase bg-clip-text text-transparent bg-gradient-to-r from-white to-pink-300"
@@ -296,12 +296,12 @@ export default function Home() {
                   {selectedCondition}
                 </motion.h2>
 
-                <motion.div 
+                <motion.div
                   className="bg-white/10 backdrop-blur-md rounded-2xl p-6 md:p-8 shadow-xl relative overflow-hidden"
                   whileHover={{ scale: 1.01 }}
                   transition={{ type: "spring", stiffness: 400 }}
                 >
-                  <motion.div 
+                  <motion.div
                     className="absolute inset-0 bg-gradient-to-r from-pink-500/5 to-purple-500/5"
                     animate={{
                       backgroundPosition: ['0% 0%', '100% 100%'],
@@ -314,7 +314,7 @@ export default function Home() {
                   />
 
                   <div className="relative z-10">
-                    <motion.p 
+                    <motion.p
                       className="text-white text-base md:text-lg mb-8 leading-relaxed"
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
@@ -357,12 +357,12 @@ export default function Home() {
                       ))}
                     </div>
 
-                    <motion.div 
+                    <motion.div
                       className="mt-8 text-center"
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
                     >
-                      <motion.button 
+                      <motion.button
                         className="bg-gradient-to-r from-pink-500 to-purple-500 text-white px-6 md:px-8 py-2 md:py-3 rounded-full text-sm md:text-base font-medium relative overflow-hidden group"
                         whileHover={{ boxShadow: "0 0 20px rgba(255,167,208,0.5)" }}
                       >

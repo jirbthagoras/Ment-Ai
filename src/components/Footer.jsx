@@ -1,4 +1,5 @@
 import { motion } from 'framer-motion';
+import React from 'react';
 import { Link } from 'react-router-dom';
 import logo from '../assets/logo.png';
 
@@ -59,7 +60,7 @@ const Footer = () => {
   ];
 
   return (
-    <motion.footer 
+    <motion.footer
       className="bg-[#1E498E] text-white relative overflow-hidden"
       initial="hidden"
       whileInView="visible"
@@ -68,14 +69,14 @@ const Footer = () => {
     >
       {/* Animated background gradient */}
       <div className="absolute inset-0 bg-gradient-to-r from-blue-600/10 to-purple-600/10 blur-3xl" />
-      
+
       <div className="container mx-auto px-4 py-12 relative">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* Logo and Description */}
           <motion.div variants={itemVariants} className="col-span-1">
-            <motion.img 
-              src={logo} 
-              alt="Ment'Ai Logo" 
+            <motion.img
+              src={logo}
+              alt="Ment'Ai Logo"
               className="h-12 w-auto mb-4 brightness-0 invert"
               whileHover={{ scale: 1.05 }}
               transition={{ type: "spring", stiffness: 300 }}
@@ -90,7 +91,7 @@ const Footer = () => {
             <h3 className="font-bold text-lg mb-4">Quick Links</h3>
             <ul className="space-y-2">
               {['Home', 'About Us', 'Layanan Konsultasi', 'DrMen'].map((link) => (
-                <motion.li 
+                <motion.li
                   key={link}
                   whileHover={{ x: 5 }}
                   transition={{ type: "spring", stiffness: 300 }}
@@ -107,7 +108,7 @@ const Footer = () => {
           <motion.div variants={itemVariants} className="col-span-1">
             <h3 className="font-bold text-lg mb-4">Contact Us</h3>
             <ul className="space-y-4">
-              <motion.li 
+              <motion.li
                 className="flex items-center space-x-2"
                 whileHover={{ x: 5 }}
                 transition={{ type: "spring", stiffness: 300 }}
@@ -118,7 +119,7 @@ const Footer = () => {
                 </svg>
                 <span className="text-white/80">contact@mentai.id</span>
               </motion.li>
-              <motion.li 
+              <motion.li
                 className="flex items-center space-x-2"
                 whileHover={{ x: 5 }}
                 transition={{ type: "spring", stiffness: 300 }}
@@ -142,7 +143,7 @@ const Footer = () => {
                   target="_blank"
                   rel="noopener noreferrer"
                   className="p-3 bg-white/10 rounded-full hover:bg-white/20 transition-colors"
-                  whileHover={{ 
+                  whileHover={{
                     scale: 1.1,
                     rotate: 5,
                     transition: { type: "spring", stiffness: 400 }
@@ -157,7 +158,7 @@ const Footer = () => {
         </div>
 
         {/* Copyright */}
-        <motion.div 
+        <motion.div
           variants={itemVariants}
           className="border-t border-white/10 mt-12 pt-8 text-center"
         >
@@ -170,4 +171,4 @@ const Footer = () => {
   );
 };
 
-export default Footer; 
+export default Footer;

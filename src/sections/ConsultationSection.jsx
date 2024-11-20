@@ -2,7 +2,7 @@ import { motion } from 'framer-motion';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import doctorImage from '../assets/psikiater.png';
-import mascot from '../assets/mascot.png';
+import mascot from '../assets/Mascot.png';
 
 const ConsultationSection = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -148,4 +148,4 @@ const ConsultationSection = () => {
   );
 };
 
-export default ConsultationSection; 
+export default ConsultationSection;
