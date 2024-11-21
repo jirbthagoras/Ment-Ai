@@ -1,11 +1,14 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { auth } from '../firebase'; // Import auth
+import { getFirestore, doc, getDoc } from 'firebase/firestore'; // Import Firestore functions
 import logo from '../assets/logo.png';
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [scaleX, setScaleX] = useState(0);
+  const [userRole, setUserRole] = useState(null); // State to hold user role
 
   const toggleMenu = () => {
     setIsOpen(!isOpen);
@@ -22,9 +25,23 @@ const Navbar = () => {
   };
 
   useEffect(() => {
+    const db = getFirestore();
+    const unsubscribe = auth.onAuthStateChanged(async (user) => {
+      if (user) {
+        const userDoc = await getDoc(doc(db, 'users', user.uid));
+        if (userDoc.exists()) {
+          const userData = userDoc.data();
+          setUserRole(userData.isAdmin ? 'admin' : 'user'); // Set user role based on Firestore data
+        }
+      } else {
+        setUserRole(null); // Reset user role if not logged in
+      }
+    });
+
     window.addEventListener('scroll', handleScroll);
     return () => {
       window.removeEventListener('scroll', handleScroll);
+      unsubscribe(); // Cleanup subscription on unmount
     };
   }, []);
 
@@ -85,6 +102,13 @@ const Navbar = () => {
             <a href="#" className="text-blue-900 font-medium hover:text-blue-700">About</a>
             <a href="#" className="text-blue-900 font-medium hover:text-blue-700">Layanan Konsultasi</a>
             <a href="/aipage" className="text-blue-900 font-medium hover:text-blue-700">DrMen</a>
+            {userRole === 'admin' ? (
+              <a href="/admin" className="text-blue-900 font-medium hover:text-blue-700">Admin</a>
+            ) : userRole === 'user' ? (
+              <a href="/profile" className="text-blue-900 font-medium hover:text-blue-700">Profile</a>
+            ) : (
+              <a href="/Login" className="text-blue-900 font-medium hover:text-blue-700">Login</a>
+            )}
           </div>
 
           {/* Mobile Menu Toggle */}
@@ -145,6 +169,31 @@ const Navbar = () => {
                 >
                   DrMen
                 </a>
+                {userRole === 'admin' ? (
+                  <a
+                    href="/admin"
+                    className="text-blue-900 font-medium text-xl"
+                    onClick={closeMenu}
+                  >
+                    Admin
+                  </a>
+                ) : userRole === 'user' ? (
+                  <a
+                    href="/profile"
+                    className="text-blue-900 font-medium text-xl"
+                    onClick={closeMenu}
+                  >
+                    Profile
+                  </a>
+                ) : (
+                  <a
+                    href="/Login"
+                    className="text-blue-900 font-medium text-xl"
+                    onClick={closeMenu}
+                  >
+                    Login
+                  </a>
+                )}
               </div>
             </motion.div>
           )}

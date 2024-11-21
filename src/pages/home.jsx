@@ -6,8 +6,6 @@ import moodswingImg from '../assets/mood/MoodSwing.png';
 import stressImg from '../assets/mood/Stress.png';
 import traumaImg from '../assets/mood/Trauma.png';
 import ConsultationSection from '../sections/ConsultationSection';
-import Footer from '../components/Footer';
-import Navbar from '../components/Navbar';
 
 export default function Home() {
   const [selectedCondition, setSelectedCondition] = useState(null);
@@ -136,7 +134,6 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#FFA7D0] via-[#1E498E] to-[#A0A9FF] font-jakarta">
-      <Navbar />
 
       <motion.div
         className="relative min-h-screen overflow-hidden"
@@ -387,7 +384,6 @@ export default function Home() {
         <ConsultationSection />
       </div>
 
-      <Footer />
     </div>
   );
 }
