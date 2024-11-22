@@ -200,7 +200,6 @@ export default function Admin() {
   const [username, setUsername] = useState('')
   const [appointments, setAppointments] = useState([])
   const [messages, setMessages] = useState([])
-  const [notifications, setNotifications] = useState([])
   const [patientCount, setPatientCount] = useState(0)
   const [completedConsultations, setCompletedConsultations] = useState(0)
   const [isLoading, setIsLoading] = useState(true)
@@ -306,6 +305,9 @@ export default function Admin() {
             setMessages(messagesList);
           });
 
+          // Call fetchTodayAppointments
+          await fetchTodayAppointments();
+
         } catch (error) {
           console.error("Error fetching data:", error);
         } finally {
@@ -320,7 +322,7 @@ export default function Admin() {
         // Add cleanup for any active listeners if needed
       };
     }
-  }, [user]);
+  }, [user, fetchTodayAppointments]);
 
   // Filter appointments based on search and status
   const filteredAppointments = appointments.filter(appointment => {
@@ -362,14 +364,14 @@ export default function Admin() {
             {...bellAnimation}
           >
             <FaBell className="text-2xl cursor-pointer hover:text-yellow-300 transition-colors" />
-            {notifications.length > 0 && (
+            {messages.length > 0 && (
               <motion.span
                 className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center"
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
                 transition={{ type: "spring", stiffness: 500 }}
               >
-                {notifications.length}
+                {messages.length}
               </motion.span>
             )}
           </motion.div>
