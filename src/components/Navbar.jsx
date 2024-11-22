@@ -98,9 +98,9 @@ const Navbar = () => {
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex space-x-6">
-            <a href="/" className="text-blue-900 font-medium hover:text-blue-700">Home</a>
-            <a href="#" className="text-blue-900 font-medium hover:text-blue-700">About</a>
-            <a href="#" className="text-blue-900 font-medium hover:text-blue-700">Layanan Konsultasi</a>
+            <a href="/" className="text-blue-900 font-medium hover:text-blue-700">Beranda</a>
+            <a href="#" className="text-blue-900 font-medium hover:text-blue-700">Komunitas</a>
+            <a href="/Konsultasi" className="text-blue-900 font-medium hover:text-blue-700">Layanan Konsultasi</a>
             <a href="/aipage" className="text-blue-900 font-medium hover:text-blue-700">DrMen</a>
             {userRole === 'admin' ? (
               <a href="/admin" className="text-blue-900 font-medium hover:text-blue-700">Admin</a>

@@ -64,7 +64,7 @@ const ConsultationSection = () => {
                 untuk mengatasi kesehatan<br />
                 mental generasi muda
               </p>
-              <Link to="/aipage">
+              <Link to="/Konsultasi">
                 <motion.button
                   whileHover={{ scale: 1.1, backgroundColor: '#f0f0f0' }}
                   whileTap={{ scale: 0.95 }}

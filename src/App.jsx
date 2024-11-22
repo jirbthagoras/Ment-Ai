@@ -8,6 +8,7 @@ import Footer from '@/components/Footer';
 import Login from'./pages/loginregis';
 import Admin from './pages/admin'
 import ComProfile from './pages/complete-profile'
+import Konsultasi from './pages/konsultasi';
 
 function App() {
   return (
@@ -19,6 +20,7 @@ function App() {
         <Route path="/Login" element={<Login />} />
         <Route path="/Register" element={<Login />} />
         <Route path="/complete-profile" element={<ComProfile/>} />
+        <Route path="/Konsultasi" element={<Konsultasi/>}/>
         <Route path="/admin" element={<Admin />} />
         <Route path="/aipage" element={<AiPage />} />
       </Routes>
