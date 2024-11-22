@@ -6,7 +6,8 @@ import { FaGoogle, FaEyeSlash, FaEye } from 'react-icons/fa';
 import { motion } from 'framer-motion';
 import { auth } from '../firebase';
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, onAuthStateChanged } from 'firebase/auth';
-import { getFirestore, doc, setDoc, getDoc } from 'firebase/firestore';
+import { ref, set, get } from 'firebase/database';
+import { realtimeDb } from '../firebase';
 
 import logow from '../assets/LogoW.png';
 
@@ -21,7 +22,6 @@ export default function Component() {
 
   const provider = new GoogleAuthProvider()
   const navigate = useNavigate()
-  const db = getFirestore()
 
   // Check if user is already logged in
   useEffect(() => {
@@ -49,17 +49,35 @@ export default function Component() {
     }
   }
 
-  const checkUserRole = async (uid) => {
-    const userDoc = await getDoc(doc(db, 'users', uid))
-    if (userDoc.exists()) {
-      const userData = userDoc.data()
-      if (userData.isAdmin) {
-        navigate('/admin')
-      } else {
-        navigate('/profile')
-      }
+  const saveUserData = async (uid, userData) => {
+    try {
+      const userRef = ref(realtimeDb, `users/${uid}`);
+      await set(userRef, {
+        ...userData,
+        createdAt: Date.now()
+      });
+    } catch (error) {
+      throw error;
     }
-  }
+  };
+
+  const checkUserRole = async (uid) => {
+    try {
+      const userRef = ref(realtimeDb, `users/${uid}`);
+      const snapshot = await get(userRef);
+      
+      if (snapshot.exists()) {
+        const userData = snapshot.val();
+        if (userData.isAdmin) {
+          navigate('/admin');
+        } else {
+          navigate('/profile');
+        }
+      }
+    } catch (error) {
+      throw error;
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -80,10 +98,9 @@ export default function Component() {
         await checkUserRole(userCredential.user.uid)
       } else {
         const userCredential = await createUserWithEmailAndPassword(auth, email, password)
-        // After registration, set the user information in Firestore
-        await setDoc(doc(db, 'users', userCredential.user.uid), {
+        await saveUserData(userCredential.user.uid, {
           email: email,
-          isAdmin: false // Set default role as normal user
+          isAdmin: false
         })
         console.log('Registration successful')
         navigate('/complete-profile')
