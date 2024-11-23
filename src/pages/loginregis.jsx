@@ -4,10 +4,10 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { FaGoogle, FaEyeSlash, FaEye } from 'react-icons/fa';
 import { motion } from 'framer-motion';
-import { auth } from '../firebase';
+import { auth, realtimeDb, db } from '../firebase';
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, onAuthStateChanged } from 'firebase/auth';
 import { ref, set, get } from 'firebase/database';
-import { realtimeDb } from '../firebase';
+import { doc, setDoc, getDoc } from 'firebase/firestore';
 
 import logow from '../assets/LogoW.png';
 
@@ -39,74 +39,145 @@ export default function Component() {
     try {
       const result = await signInWithPopup(auth, provider)
       const user = result.user
+      
+      // Check if this is a new user
+      const userDocRef = doc(db, 'users', user.uid)
+      const userDocSnap = await getDoc(userDocRef)
+      
+      if (!userDocSnap.exists()) {
+        // New Google user - save initial data
+        await saveUserData(user.uid, {
+          email: user.email,
+          displayName: user.displayName,
+          photoURL: user.photoURL
+        })
+      } else {
+        // Existing user - update last login
+        await setDoc(userDocRef, {
+          lastLogin: new Date()
+        }, { merge: true })
+      }
+      
       await checkUserRole(user.uid)
     } catch (err) {
       if (err.code === 'auth/popup-closed-by-user') {
-        setError('Popup was closed before completing the sign-in. Please try again.')
+        setError('Login dibatalkan. Silakan coba lagi.')
       } else {
-        setError(err.message)
+        console.error('Google login error:', err)
+        setError('Terjadi kesalahan saat login dengan Google.')
       }
     }
   }
 
   const saveUserData = async (uid, userData) => {
     try {
-      const userRef = ref(realtimeDb, `users/${uid}`);
+      // Save to Firestore - user profile data
+      const userDocRef = doc(db, 'users', uid)
+      await setDoc(userDocRef, {
+        email: userData.email,
+        createdAt: new Date(),
+        profileCompleted: false,
+        lastLogin: new Date()
+      }, { merge: true })
+
+      // Save to Realtime Database - user status/role
+      const userRef = ref(realtimeDb, `users/${uid}`)
       await set(userRef, {
-        ...userData,
-        createdAt: Date.now()
-      });
+        email: userData.email,
+        isAdmin: false,
+        createdAt: Date.now(),
+        status: 'active'
+      })
     } catch (error) {
-      throw error;
+      console.error('Error saving user data:', error)
+      throw error
     }
-  };
+  }
 
   const checkUserRole = async (uid) => {
     try {
-      const userRef = ref(realtimeDb, `users/${uid}`);
-      const snapshot = await get(userRef);
+      // Check Firestore first for user profile
+      const userDocRef = doc(db, 'users', uid)
+      const userDocSnap = await getDoc(userDocRef)
       
-      if (snapshot.exists()) {
-        const userData = snapshot.val();
-        if (userData.isAdmin) {
-          navigate('/admin');
+      // Check Realtime Database for role/status
+      const userRef = ref(realtimeDb, `users/${uid}`)
+      const realtimeSnap = await get(userRef)
+      
+      if (userDocSnap.exists() && realtimeSnap.exists()) {
+        // User exists in both databases
+        const firestoreData = userDocSnap.data()
+        const realtimeData = realtimeSnap.val()
+        
+        if (realtimeData.isAdmin) {
+          navigate('/admin')
+        } else if (firestoreData.profileCompleted) {
+          navigate('/profile')
         } else {
-          navigate('/profile');
+          navigate('/complete-profile')
         }
+      } else if (!userDocSnap.exists()) {
+        // New user - needs to complete profile
+        navigate('/complete-profile')
+      } else {
+        throw new Error('User data inconsistency detected')
       }
     } catch (error) {
-      throw error;
+      console.error('Error checking user role:', error)
+      setError('Error verifying user status. Please try again.')
+      throw error
     }
-  };
+  }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
     setError('')
 
     if (!email || !password) {
-      setError("Please fill in all fields.")
+      setError("Mohon isi semua field.")
       return
     }
     if (!isLogin && password !== confirmPassword) {
-      setError("Passwords do not match.")
+      setError("Password tidak cocok.")
       return
     }
 
     try {
       if (isLogin) {
         const userCredential = await signInWithEmailAndPassword(auth, email, password)
+        // Update last login in Firestore
+        const userDocRef = doc(db, 'users', userCredential.user.uid)
+        await setDoc(userDocRef, {
+          lastLogin: new Date()
+        }, { merge: true })
+        
         await checkUserRole(userCredential.user.uid)
       } else {
         const userCredential = await createUserWithEmailAndPassword(auth, email, password)
         await saveUserData(userCredential.user.uid, {
-          email: email,
-          isAdmin: false
+          email: email
         })
-        console.log('Registration successful')
         navigate('/complete-profile')
       }
     } catch (err) {
-      setError(err.message)
+      console.error('Auth error:', err)
+      switch (err.code) {
+        case 'auth/email-already-in-use':
+          setError('Email sudah terdaftar.')
+          break
+        case 'auth/invalid-email':
+          setError('Format email tidak valid.')
+          break
+        case 'auth/weak-password':
+          setError('Password terlalu lemah. Minimal 6 karakter.')
+          break
+        case 'auth/user-not-found':
+        case 'auth/wrong-password':
+          setError('Email atau password salah.')
+          break
+        default:
+          setError('Terjadi kesalahan. Silakan coba lagi.')
+      }
     }
   }
 

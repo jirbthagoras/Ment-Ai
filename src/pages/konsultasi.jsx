@@ -4,7 +4,7 @@ import { motion } from 'framer-motion'
 import { FaUser, FaClock, FaChevronLeft, FaChevronRight, FaCheckCircle } from 'react-icons/fa'
 import { useState, useEffect } from 'react'
 import { auth, realtimeDb } from '../firebase'
-import { ref, push, set, onValue, query, orderByChild, equalTo, serverTimestamp } from 'firebase/database'
+import { ref, push, set, onValue, query, orderByChild, equalTo } from 'firebase/database'
 import { onAuthStateChanged } from 'firebase/auth'
 import PropTypes from 'prop-types'
 
