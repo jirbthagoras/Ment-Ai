@@ -14,6 +14,8 @@ import Admin from './pages/admin';
 import ComProfile from './pages/complete-profile';
 import Konsultasi from './pages/konsultasi';
 import PropTypes from 'prop-types';
+import Profile from './pages/profile';
+import AdminChat from './pages/AdminChat';
 
 // Protected Route Component
 const AdminRoute = ({ children }) => {
@@ -85,14 +87,23 @@ function App() {
         <Route path="/complete-profile" element={<ComProfile/>} />
         <Route path="/Konsultasi" element={<Konsultasi/>}/>
         <Route 
-          path="/admin" 
+          path="/admin"
           element={
             <AdminRoute>
               <Admin />
             </AdminRoute>
           } 
         />
+        <Route 
+          path="/adminchat"
+          element={
+            <AdminRoute>
+              <AdminChat />
+            </AdminRoute>
+          } 
+        />
         <Route path="/aipage" element={<AiPage />} />
+        <Route path="/profile" element={<Profile />} />
       </Routes>
       <Footer />
     </Router>

@@ -2,11 +2,16 @@
 
 import { motion } from 'framer-motion'
 import { FaUser, FaClock, FaChevronLeft, FaChevronRight, FaCheckCircle } from 'react-icons/fa'
-import { useState, useEffect } from 'react'
-import { auth, realtimeDb } from '../firebase'
-import { ref, push, set, onValue, query, orderByChild, equalTo } from 'firebase/database'
+import { useState, useEffect, useCallback } from 'react'
+import { auth } from '../firebase'
 import { onAuthStateChanged } from 'firebase/auth'
 import PropTypes from 'prop-types'
+import { 
+  getBookedSlots, 
+  saveAppointment, 
+  validateBookingData, 
+  createBookingData 
+} from '../services/consultationService'
 
 const CONSULTATION_PRICE = 25000;
 
@@ -162,32 +167,17 @@ export default function Konsultasi() {
       setError(null);
 
       try {
-        const bookingData = {
-          date: selectedDate.toISOString(),
-          times: selectedTimes,
-          doctor: selectedDoctor,
-          userId: user?.uid || 'guest',
-          patientName: user?.displayName || 'Guest Patient',
-          paymentMethod: selectedPayment,
-          quantity: selectedTimes.length,
-          pricePerSession: CONSULTATION_PRICE,
-          totalAmount: CONSULTATION_PRICE * selectedTimes.length,
-          status: 'pending',
-          createdAt: new Date().toISOString(),
-          tags: ['New', 'Consultation'],
-          metadata: {
-            createdBy: user?.uid || 'guest',
-            createdAt: new Date().toISOString(),
-            lastUpdated: new Date().toISOString()
-          }
-        };
+        const bookingData = createBookingData({
+          selectedDate,
+          selectedTimes,
+          selectedDoctor,
+          selectedPayment,
+          user,
+          CONSULTATION_PRICE
+        });
 
-        // Update to use Realtime Database
-        const appointmentsRef = ref(realtimeDb, 'appointments');
-        const newAppointmentRef = push(appointmentsRef);
-        await set(newAppointmentRef, bookingData);
-        
-        console.log('Appointment saved with ID:', newAppointmentRef.key);
+        const appointmentId = await saveAppointment(bookingData);
+        console.log('Appointment saved with ID:', appointmentId);
         
         setProcessingPayment(false);
         setPaymentStep(3);
@@ -199,26 +189,14 @@ export default function Konsultasi() {
       }
     };
 
-    // Add a function to validate the data before saving
-    const validateBookingData = () => {
-      const errors = [];
-      
-      if (!selectedDate) errors.push('Tanggal harus dipilih');
-      if (!selectedTimes.length) errors.push('Waktu konsultasi harus dipilih');
-      if (!selectedDoctor) errors.push('Dokter harus dipilih');
-      if (!selectedPayment) errors.push('Metode pembayaran harus dipilih');
-      
-      if (errors.length > 0) {
-        throw new Error(errors.join('\n'));
-      }
-      
-      return true;
-    };
-
-    // Update the payment confirmation handler
     const handlePaymentConfirmation = async () => {
       try {
-        validateBookingData();
+        validateBookingData({
+          selectedDate,
+          selectedTimes,
+          selectedDoctor,
+          selectedPayment
+        });
         await confirmPayment();
       } catch (error) {
         alert(error.message);
@@ -381,55 +359,32 @@ export default function Konsultasi() {
     return () => unsubscribe();
   }, []);
 
-  // Add this helper function at the top of your component
-  const formatDateForFirestore = (date) => {
-    if (!date) return null;
-    return date.toISOString().split('T')[0]; // Returns YYYY-MM-DD format
-  };
-
-  // Add fetchBookedSlots function
-  const fetchBookedSlots = async (selectedDate, selectedDoctor) => {
+  // Fetch booked slots
+  const fetchBookedSlots = useCallback((selectedDate, selectedDoctor) => {
     if (!selectedDate || !selectedDoctor) return;
-
+    
     try {
       setIsLoading(true);
       setError(null);
-
-      const dateString = formatDateForFirestore(selectedDate);
       
-      const appointmentsRef = ref(realtimeDb, 'appointments');
-      const appointmentsQuery = query(
-        appointmentsRef,
-        orderByChild('doctor'),
-        equalTo(selectedDoctor)
-      );
-
-      onValue(appointmentsQuery, (snapshot) => {
-        const booked = {};
-        
-        snapshot.forEach((childSnapshot) => {
-          const appointment = childSnapshot.val();
-          if (appointment.date === dateString && Array.isArray(appointment.times)) {
-            appointment.times.forEach((time) => {
-              booked[time] = true;
-            });
-          }
-        });
-
+      const unsubscribe = getBookedSlots(selectedDate, selectedDoctor, (booked) => {
         setBookedSlots(booked);
-        setIsLoading(false);
-      }, (error) => {
-        console.error('Error fetching booked slots:', error);
-        setError('Gagal memuat jadwal yang tersedia. Silakan coba lagi.');
         setIsLoading(false);
       });
 
+      return unsubscribe;
     } catch (error) {
       console.error('Error setting up booked slots listener:', error);
       setError('Gagal memuat jadwal yang tersedia. Silakan coba lagi.');
       setIsLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    if (selectedDate && selectedDoctor) {
+      fetchBookedSlots(selectedDate, selectedDoctor);
+    }
+  }, [selectedDate, selectedDoctor, fetchBookedSlots]);
 
   // Update the renderScheduleSection to handle loading and error states
   const renderScheduleSection = () => {
@@ -466,73 +421,48 @@ export default function Konsultasi() {
         <h4 className="font-semibold mb-4">Pilihan Jadwal:</h4>
         <div className="space-y-3">
           {selectedDoctor && doctorSchedules[selectedDoctor].map((slot, index) => {
-            const isBooked = bookedSlots[slot.time];
-            const isSelected = selectedTimes.includes(slot.time);
-            const isDisabled = isBooked || (selectedTimes.length >= 5 && !isSelected);
-
+            const isBooked = bookedSlots[slot.time]?.isBooked;
+            const bookingStatus = bookedSlots[slot.time]?.status;
+            
             return (
               <motion.div
-                key={`schedule-${index}`}
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ 
-                  duration: 0.4,
-                  delay: index * 0.1,
-                  ease: "easeOut"
-                }}
-                whileHover={{ 
-                  scale: isDisabled ? 1 : 1.02,
-                  x: isDisabled ? 0 : 5,
-                  transition: { duration: 0.2 }
-                }}
-                onClick={() => !isDisabled && handleTimeSelection(slot.time)}
-                className={`
-                  bg-gray-50 p-4 rounded-full flex items-center gap-4
-                  ${isBooked 
-                    ? 'bg-gray-200 cursor-not-allowed' 
-                    : isSelected 
-                      ? 'bg-[#1e4287] text-white cursor-pointer' 
-                      : 'hover:bg-gray-100 cursor-pointer'
-                  }
-                  ${isDisabled ? 'opacity-50' : ''}
-                `}
+                key={index}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, delay: index * 0.1 }}
               >
-                <FaClock 
-                  className={`
-                    ${isSelected ? 'text-white' : isBooked ? 'text-gray-500' : 'text-[#1e4287]'}
-                  `} 
-                />
-                <div>
-                  <p className="font-semibold">{slot.session}</p>
-                  <p className={`text-sm ${
-                    isSelected ? 'text-white' : isBooked ? 'text-gray-500' : 'text-gray-600'
-                  }`}>
-                    {slot.time}
-                  </p>
-                  {isBooked && (
-                    <span className="text-xs text-red-500">Sudah dibooking</span>
-                  )}
+                <div className="flex items-center justify-between p-4 bg-white rounded-lg shadow-sm">
+                  <div>
+                    <h5 className="font-medium text-gray-900">{slot.session}</h5>
+                    <p className="text-sm text-gray-500">{slot.time}</p>
+                  </div>
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => handleTimeSelection(slot.time)}
+                    disabled={isBooked}
+                    className={`
+                      px-4 py-2 rounded-full text-sm font-medium
+                      ${isBooked 
+                        ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                        : selectedTimes.includes(slot.time)
+                          ? 'bg-[#1e4287] text-white'
+                          : 'bg-blue-50 text-[#1e4287] hover:bg-blue-100'
+                      }
+                    `}
+                  >
+                    {isBooked 
+                      ? `Terpesan${bookingStatus ? ` (${bookingStatus})` : ''}`
+                      : selectedTimes.includes(slot.time)
+                        ? 'Terpilih'
+                        : 'Pilih Jadwal'
+                    }
+                  </motion.button>
                 </div>
               </motion.div>
             );
           })}
         </div>
-
-        {selectedTimes.length > 0 && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="mt-4 p-4 bg-green-50 rounded-lg border border-green-200"
-          >
-            <p className="text-green-800 font-semibold">Jadwal Terpilih:</p>
-            {selectedTimes.map((time, index) => (
-              <p key={index} className="text-green-600">{time}</p>
-            ))}
-            <p className="text-sm text-gray-500 mt-2">
-              Total sesi: {selectedTimes.length}
-            </p>
-          </motion.div>
-        )}
       </div>
     );
   };
@@ -830,8 +760,8 @@ export default function Konsultasi() {
                         whileTap={{ scale: 0.95 }}
                         onClick={() => isCurrentMonth && setSelectedDate(date)}
                         className={`
-                          p-2 text-center cursor-pointer rounded-lg transition-colors
-                          ${isCurrentMonth ? 'hover:bg-gray-100' : 'opacity-30 cursor-not-allowed'}
+                          p-2 m-2 text-center cursor-pointer rounded-lg transition-colors
+                          ${isCurrentMonth ? 'hover:bg-blue-400' : 'opacity-30 cursor-not-allowed'}
                           ${isSelected ? 'bg-[#1e4287] text-white' : ''}
                           ${isToday(date) && !isSelected ? 'border-2 border-[#1e4287]' : ''}
                         `}

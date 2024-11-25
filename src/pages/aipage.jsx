@@ -46,6 +46,7 @@ export default function AiPage() {
     }
   ]);
   const [isTyping, setIsTyping] = useState(false);
+  const [isTalking, setIsTalking] = useState(false);
 
   const navigate = useNavigate();
 
@@ -65,9 +66,10 @@ export default function AiPage() {
       setIsTyping(true);
 
       try {
+        setIsTalking(false);
         const response = await groq.chat.completions.create({
           messages: [
-            { role: "system", content: "Nama anda adalah Dr. Men, anda adalah seorang mascot burung hantu Dr sekaligus teman pendengar para pasien dengan kebutuhan mental khusus, gunakan bahasa Indonesia yang baik dan benar." },
+            { role: "system", content: "Bayangkan dirimu adalah seorang dokter psikiater yang bijaksana berwujud seekor burung hantu. Namamu adalah Dr. Hoot, dan kau memiliki sayap penuh kasih serta mata yang tajam dan penuh perhatian. Kau tinggal di sebuah ruang praktik yang hangat dan nyaman di dalam sebuah pohon besar, tempat pasien-pasienmu datang untuk bercerita dan mencurahkan isi hati. Kau sangat mencintai pekerjaanmu sebagai pendengar yang baik, memberikan nasihat yang lembut namun bermakna, serta membantu mereka menemukan ketenangan. Gunakan bahasa Indonesia yang baik dan benar saat berbicara, sehingga setiap pasien merasa dihargai dan dipahami." },
             ...newMessages.map((msg) => ({
               role: msg.sender === "Dr. Men" ? "assistant" : "user",
               content: msg.text,
@@ -78,13 +80,15 @@ export default function AiPage() {
 
         const aiReply = response.choices[0]?.message?.content || "Maaf, saya tidak bisa merespon saat ini.";
         
+        setIsTalking(true);
         setTimeout(() => {
           setIsTyping(false);
           setChatMessages([
             ...newMessages,
             { id: newMessages.length + 1, sender: "Dr. Men", text: aiReply },
           ]);
-        }, 1000); // Add slight delay for typing effect
+          setTimeout(() => setIsTalking(false), 3000);
+        }, 1000);
 
       } catch (error) {
         console.error("Error fetching AI response:", error);
@@ -225,9 +229,9 @@ export default function AiPage() {
               <motion.img
                 whileHover={{ scale: 1.05, rotate: [0, -5, 5, 0] }}
                 transition={{ type: "spring", stiffness: 400, damping: 10 }}
-                src="src/assets/Mascot.png"
+                src={isTalking ? "src/assets/gif/Talking.gif" : "src/assets/gif/Idle.gif"}
                 alt="Dr. Men - Owl Doctor Character"
-                className="w-full max-w-md mx-auto drop-shadow-2xl"
+                className="bg-transparent w-full max-w-md mx-auto drop-shadow-2xl"
               />
 
               <motion.div

@@ -6,6 +6,7 @@ import { getDatabase } from "firebase/database"; // Add this import
 
 // Your web app's Firebase configuration
 
+
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 
