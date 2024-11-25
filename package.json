@@ -10,7 +10,9 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.46.1",
     "crypto-js": "^4.2.0",
+    "date-fns": "^4.1.0",
     "firebase": "^11.0.2",
     "framer-motion": "^11.11.17",
     "groq-sdk": "^0.8.0",

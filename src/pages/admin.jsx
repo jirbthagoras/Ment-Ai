@@ -1,11 +1,18 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { FaUser, FaComments, FaCalendarAlt, FaBell, FaSearch, FaFilter, FaMoneyBillWave } from 'react-icons/fa'
-import { auth, realtimeDb, db } from '../firebase'
-import { ref, onValue } from 'firebase/database'
+import { FaUser, FaComments, FaCalendarAlt, FaBell, FaSearch, FaFilter, FaMoneyBillWave, FaClock } from 'react-icons/fa'
+import { auth } from '../firebase'
 import { motion, AnimatePresence } from 'framer-motion'
-import { doc, getDoc } from 'firebase/firestore'
+import { 
+  getUserData, 
+  getMessages, 
+  getTodayAppointments,
+  getActiveAppointments,
+  filterActiveAppointments
+} from '../services/adminService'
+import { useNavigate } from 'react-router-dom';
+import { createChatRoom, checkChatRoomExists } from '../services/chatService';
 
 // Add bell animation configuration
 const bellAnimation = {
@@ -72,129 +79,6 @@ const renderMessages = (messages) => {
   ))
 }
 
-const renderAppointmentCard = (appointment, index) => (
-  <motion.div
-    key={appointment.id}
-    className="bg-white rounded-xl p-6 shadow-lg hover:shadow-xl transition-shadow"
-    initial={{ opacity: 0, y: 20 }}
-    animate={{ opacity: 1, y: 0 }}
-    exit={{ opacity: 0, y: -20 }}
-    transition={{ duration: 0.5, delay: index * 0.1 }}
-  >
-    <div className="flex flex-col md:flex-row justify-between gap-4">
-      {/* Left Section - Patient Info */}
-      <div className="flex-1">
-        <div className="flex items-center gap-3 mb-3">
-          <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-            <FaUser className="text-blue-600 text-xl" />
-          </div>
-          <div>
-            <h3 className="font-semibold text-lg text-gray-800">
-              {appointment.patientName}
-            </h3>
-            <p className="text-gray-600 text-sm">
-              Patient ID: {appointment.id.slice(0, 8)}
-            </p>
-          </div>
-        </div>
-
-        {/* Doctor and Schedule Info */}
-        <div className="space-y-2 mt-4">
-          <div className="flex items-center gap-2 text-gray-700">
-            <FaUser className="text-blue-500" />
-            <span className="font-medium">Dr. {appointment.doctor}</span>
-          </div>
-          
-          <div className="flex items-center gap-2 text-gray-700">
-            <FaCalendarAlt className="text-blue-500" />
-            <span>{new Date(appointment.date).toLocaleDateString('id-ID', {
-              weekday: 'long',
-              year: 'numeric',
-              month: 'long',
-              day: 'numeric'
-            })}</span>
-          </div>
-
-          {/* Time Slots */}
-          <div className="flex flex-wrap gap-2 mt-2">
-            {appointment.times && appointment.times.map((time, idx) => (
-              <span
-                key={idx}
-                className="px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-sm"
-              >
-                {time}
-              </span>
-            ))}
-          </div>
-        </div>
-
-        {/* Tags */}
-        <div className="flex flex-wrap gap-2 mt-4">
-          {appointment.tags && renderTags(appointment.tags)}
-        </div>
-      </div>
-
-      {/* Right Section - Status and Actions */}
-      <div className="md:w-48 flex flex-col items-end justify-between">
-        {/* Status Badge */}
-        <div className={`px-4 py-2 rounded-full text-sm font-medium ${
-          appointment.status === 'pending' 
-            ? 'bg-yellow-100 text-yellow-800' 
-            : appointment.status === 'completed'
-            ? 'bg-green-100 text-green-800'
-            : 'bg-red-100 text-red-800'
-        }`}>
-          {appointment.status.toUpperCase()}
-        </div>
-
-        {/* Payment Info */}
-        <div className="text-right mt-4">
-          <div className="flex items-center justify-end gap-2 text-gray-600">
-            <FaMoneyBillWave className="text-green-500" />
-            <span className="font-medium">{appointment.paymentMethod}</span>
-          </div>
-          <div className="text-sm text-gray-500 mt-1">
-            {appointment.quantity} sesi
-          </div>
-          <div className="font-semibold text-gray-800 mt-1">
-            Rp{appointment.totalAmount?.toLocaleString('id-ID')}
-          </div>
-        </div>
-
-        {/* Action Buttons */}
-        <div className="flex flex-col gap-2 mt-4 w-full">
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
-          >
-            ATTEND
-          </motion.button>
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            className="w-full px-4 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-200 transition-colors"
-          >
-            View Details
-          </motion.button>
-        </div>
-      </div>
-    </div>
-
-    {/* Progress Bar (for pending appointments) */}
-    {appointment.status === 'pending' && (
-      <div className="mt-4 w-full bg-gray-100 rounded-full h-2">
-        <motion.div
-          className="bg-blue-600 h-2 rounded-full"
-          initial={{ width: 0 }}
-          animate={{ width: '60%' }}
-          transition={{ duration: 1, delay: 0.5 }}
-        />
-      </div>
-    )}
-  </motion.div>
-);
-
 export default function Admin() {
   const [user, setUser] = useState(null)
   const [username, setUsername] = useState('')
@@ -206,130 +90,264 @@ export default function Admin() {
   const [searchTerm, setSearchTerm] = useState('')
   const [filterStatus, setFilterStatus] = useState('all')
   const [isFiltering, setIsFiltering] = useState(false)
+  const [chatRoomStatus, setChatRoomStatus] = useState({});
+  const navigate = useNavigate();
 
-  // Authentication effect
+  // Get filtered appointments
+  const filteredAppointments = filterActiveAppointments(appointments, searchTerm, filterStatus);
+
   useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged((currentUser) => {
+    const unsubscribe = auth.onAuthStateChanged(async (currentUser) => {
       if (currentUser) {
         setUser(currentUser)
-      } else {
-        // Handle not authenticated
-      }
-      setIsLoading(false)
-    })
-
-    return () => unsubscribe()
-  }, [])
-
-  // Function to get today's date range
-  const getTodayDateRange = () => {
-    const today = new Date();
-    const startOfDay = new Date(today.setHours(0, 0, 0, 0));
-    const endOfDay = new Date(today.setHours(23, 59, 59, 999));
-    return { startOfDay, endOfDay };
-  };
-
-  // Function to fetch today's appointments
-  const fetchTodayAppointments = async () => {
-    try {
-      const { startOfDay, endOfDay } = getTodayDateRange();
-      
-      const appointmentsRef = ref(realtimeDb, 'appointments');
-      
-      onValue(appointmentsRef, (snapshot) => {
-        let count = 0;
-        snapshot.forEach((childSnapshot) => {
-          const appointment = childSnapshot.val();
-          const appointmentDate = new Date(appointment.date);
-          if (appointmentDate >= startOfDay && appointmentDate <= endOfDay) {
-            count++;
-          }
-        });
-        setPatientCount(count);
-      });
-
-    } catch (error) {
-      console.error('Error fetching today\'s appointments:', error);
-      setPatientCount(0);
-    }
-  };
-
-  // Update useEffect to include fetchTodayAppointments in dependencies
-  useEffect(() => {
-    if (user) {
-      const fetchData = async () => {
-        setIsLoading(true);
         try {
-          // Fetch user data from Firestore
-          if (user.uid) {
-            const userDocRef = doc(db, 'users', user.uid);
-            const userDocSnap = await getDoc(userDocRef);
-            
-            if (userDocSnap.exists()) {
-              const userData = userDocSnap.data();
-              setUsername(userData.username || 'User');
-            }
+          // Get user data
+          const userData = await getUserData(currentUser.uid);
+          if (userData) {
+            setUsername(userData.username || 'User');
           }
 
-          // Continue with Realtime Database fetching
-          const appointmentsRef = ref(realtimeDb, 'appointments');
-          onValue(appointmentsRef, (snapshot) => {
-            const appointmentList = [];
-            snapshot.forEach((childSnapshot) => {
-              const appointment = {
-                id: childSnapshot.key,
-                ...childSnapshot.val()
-              };
-              appointmentList.push(appointment);
-            });
-            
+          // Set up appointments listener with active appointments only
+          const unsubscribeAppointments = getActiveAppointments((appointmentList) => {
             setAppointments(appointmentList);
-            
-            // Count completed consultations
-            const completed = appointmentList.filter(
-              app => app.status === 'completed'
-            );
+            const completed = appointmentList.filter(app => app.status === 'completed');
             setCompletedConsultations(completed.length);
           });
 
-          // Fetch messages
-          const messagesRef = ref(realtimeDb, 'messages');
-          onValue(messagesRef, (snapshot) => {
-            const messagesList = [];
-            snapshot.forEach((childSnapshot) => {
-              messagesList.push({
-                id: childSnapshot.key,
-                ...childSnapshot.val()
-              });
-            });
+          // Set up messages listener
+          const unsubscribeMessages = getMessages((messagesList) => {
             setMessages(messagesList);
           });
 
-          // Call fetchTodayAppointments
-          await fetchTodayAppointments();
+          // Set up today's appointments listener
+          const unsubscribeTodayAppointments = getTodayAppointments((count) => {
+            setPatientCount(count);
+          });
 
+          return () => {
+            unsubscribeAppointments();
+            unsubscribeMessages();
+            unsubscribeTodayAppointments();
+          };
         } catch (error) {
           console.error("Error fetching data:", error);
         } finally {
           setIsLoading(false);
         }
-      };
+      } else {
+        // Handle not authenticated
+        setIsLoading(false);
+      }
+    });
 
-      fetchData();
+    return () => unsubscribe();
+  }, []);
 
-      // Cleanup function
-      return () => {
-        // Add cleanup for any active listeners if needed
-      };
+  useEffect(() => {
+    // Check existing chat rooms for appointments
+    const checkChatRooms = async () => {
+      const status = {};
+      for (const appointment of appointments) {
+        try {
+          status[appointment.id] = await checkChatRoomExists(appointment.id);
+        } catch (error) {
+          console.error(`Error checking chat room for ${appointment.id}:`, error);
+          status[appointment.id] = false;
+        }
+      }
+      setChatRoomStatus(status);
+    };
+
+    if (appointments.length > 0) {
+      checkChatRooms();
     }
-  }, [user, fetchTodayAppointments]);
+  }, [appointments]);
 
-  // Filter appointments based on search and status
-  const filteredAppointments = appointments.filter(appointment => {
-    const matchesSearch = appointment.patientName.toLowerCase().includes(searchTerm.toLowerCase())
-    const matchesFilter = filterStatus === 'all' || appointment.status === filterStatus
-    return matchesSearch && matchesFilter
-  })
+  const handleChatAction = async (appointment) => {
+    try {
+      if (!chatRoomStatus[appointment.id]) {
+        // Create chat room
+        await createChatRoom(appointment.id);
+        setChatRoomStatus(prev => ({
+          ...prev,
+          [appointment.id]: true
+        }));
+      }
+      
+      // Navigate to chat
+      navigate('/adminchat', { 
+        state: { 
+          appointmentId: appointment.id,
+          patientName: appointment.patientName,
+          doctorName: appointment.doctor
+        }
+      });
+    } catch (error) {
+      console.error('Error handling chat action:', error);
+      // Add error notification here if needed
+    }
+  };
+
+  const renderAppointmentCard = (appointment, index) => {
+    const appointmentDate = new Date(appointment.date);
+    const today = new Date();
+    const isToday = appointmentDate.setHours(0,0,0,0) === today.setHours(0,0,0,0);
+    
+    // Calculate time remaining for today's appointments
+    let timeRemaining = null;
+    if (isToday && appointment.times?.length > 0) {
+      const [hours, minutes] = appointment.times[0].split(':').map(Number);
+      const appointmentTime = new Date();
+      appointmentTime.setHours(hours, minutes, 0, 0);
+      
+      if (appointmentTime > new Date()) {
+        const diff = appointmentTime - new Date();
+        const hoursRemaining = Math.floor(diff / (1000 * 60 * 60));
+        const minutesRemaining = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+        timeRemaining = `${hoursRemaining}h ${minutesRemaining}m remaining`;
+      }
+    }
+
+    return (
+      <motion.div
+        key={appointment.id}
+        className="bg-white rounded-xl p-6 shadow-lg hover:shadow-xl transition-shadow"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -20 }}
+        transition={{ duration: 0.5, delay: index * 0.1 }}
+      >
+        <div className="flex flex-col md:flex-row justify-between gap-4">
+          {/* Left Section - Patient Info */}
+          <div className="flex-1">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                <FaUser className="text-blue-600 text-xl" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-lg text-gray-800">
+                  {appointment.patientName}
+                </h3>
+                <p className="text-gray-600 text-sm">
+                  Patient ID: {appointment.id.slice(0, 8)}
+                </p>
+              </div>
+            </div>
+
+            {/* Doctor and Schedule Info */}
+            <div className="space-y-2 mt-4">
+              <div className="flex items-center gap-2 text-gray-700">
+                <FaUser className="text-blue-500" />
+                <span className="font-medium">Dr. {appointment.doctor}</span>
+              </div>
+              
+              <div className="flex items-center gap-2 text-gray-700">
+                <FaCalendarAlt className="text-blue-500" />
+                <span>{new Date(appointment.date).toLocaleDateString('id-ID', {
+                  weekday: 'long',
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric'
+                })}</span>
+              </div>
+
+              {/* Time Slots */}
+              <div className="flex flex-wrap gap-2 mt-2">
+                {appointment.times && appointment.times.map((time, idx) => (
+                  <span
+                    key={idx}
+                    className="px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-sm"
+                  >
+                    {time}
+                  </span>
+                ))}
+              </div>
+            </div>
+
+            {/* Tags */}
+            <div className="flex flex-wrap gap-2 mt-4">
+              {appointment.tags && renderTags(appointment.tags)}
+            </div>
+          </div>
+
+          {/* Right Section - Status and Actions */}
+          <div className="md:w-48 flex flex-col items-end justify-between">
+            {/* Status Badge */}
+            <div className={`px-4 py-2 rounded-full text-sm font-medium ${
+              appointment.status === 'pending' 
+                ? 'bg-yellow-100 text-yellow-800' 
+                : appointment.status === 'completed'
+                ? 'bg-green-100 text-green-800'
+                : 'bg-red-100 text-red-800'
+            }`}>
+              {appointment.status.toUpperCase()}
+            </div>
+
+            {/* Payment Info */}
+            <div className="text-right mt-4">
+              <div className="flex items-center justify-end gap-2 text-gray-600">
+                <FaMoneyBillWave className="text-green-500" />
+                <span className="font-medium">{appointment.paymentMethod}</span>
+              </div>
+              <div className="text-sm text-gray-500 mt-1">
+                {appointment.quantity} sesi
+              </div>
+              <div className="font-semibold text-gray-800 mt-1">
+                Rp{appointment.totalAmount?.toLocaleString('id-ID')}
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex flex-col gap-2 mt-4 w-full">
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => handleChatAction(appointment)}
+                className={`w-full px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  chatRoomStatus[appointment.id]
+                    ? 'bg-green-600 hover:bg-green-700 text-white'
+                    : 'bg-blue-600 hover:bg-blue-700 text-white'
+                }`}
+              >
+                {chatRoomStatus[appointment.id] ? 'ATTEND' : 'CREATE ROOM'}
+              </motion.button>
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                className="w-full px-4 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-200 transition-colors"
+              >
+                View Details
+              </motion.button>
+            </div>
+          </div>
+        </div>
+
+        {/* Progress Bar (for pending appointments) */}
+        {appointment.status === 'pending' && (
+          <div className="mt-4 w-full bg-gray-100 rounded-full h-2">
+            <motion.div
+              className="bg-blue-600 h-2 rounded-full"
+              initial={{ width: 0 }}
+              animate={{ width: '60%' }}
+              transition={{ duration: 1, delay: 0.5 }}
+            />
+          </div>
+        )}
+
+        {/* Add time remaining indicator for today's appointments */}
+        {timeRemaining && (
+          <motion.div 
+            className="mt-4 text-sm font-medium text-blue-600"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+          >
+            <FaClock className="inline-block mr-2" />
+            {timeRemaining}
+          </motion.div>
+        )}
+      </motion.div>
+    );
+  };
 
   if (isLoading) {
     return (
