@@ -6,6 +6,8 @@ import moodswingImg from '../assets/mood/MoodSwing.png';
 import stressImg from '../assets/mood/Stress.png';
 import traumaImg from '../assets/mood/Trauma.png';
 import ConsultationSection from '../sections/ConsultationSection';
+import CommunitySection from '../sections/CommunitySection';
+import ArticleSection from '../sections/ArticleSection';
 
 export default function Home() {
   const [selectedCondition, setSelectedCondition] = useState(null);
@@ -383,7 +385,12 @@ export default function Home() {
       <div className="relative z-10 bg-transparent">
         <ConsultationSection />
       </div>
-
+          <div>
+            <CommunitySection />
+          </div>
+          <div>
+            <ArticleSection/>
+          </div>
     </div>
   );
 }

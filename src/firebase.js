@@ -5,7 +5,15 @@ import { getFirestore } from "firebase/firestore"; // Import Firestore
 import { getDatabase } from "firebase/database"; // Add this import
 
 // Your web app's Firebase configuration
-
+const firebaseConfig = {
+  apiKey: "AIzaSyCJ1L6mZQrBO3G4_Q8f3p_fHR7geA_aViQ",
+  authDomain: "menai-e7169.firebaseapp.com",
+  projectId: "menai-e7169",
+  storageBucket: "menai-e7169.firebasestorage.app",
+  messagingSenderId: "97767797559",
+  appId: "1:97767797559:web:586109dab31caf8703a0b2",
+  measurementId: "G-7RL736E815"
+};
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
