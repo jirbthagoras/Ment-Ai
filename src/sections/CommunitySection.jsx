@@ -1,57 +1,57 @@
-import React from 'react';
-import Moodswing from '../assets/moodswingkomu.png';
-import Trauma from '../assets/traumakomu.png';
-import Depresi from '../assets/depresikomu.png';
-import Kecanduan from '../assets/kecanduankomu.png';
-import Stress from '../assets/stresskomu.png';
-
-function ArtikelCard({ title, imageSrc, style }) {
+import React from 'react'
+import Komunitas1 from '../assets/komunitas-1.png'
+import Komunitas2 from '../assets/komunitas2.png'
+const CommunitySection = () => {
   return (
-    <div>
-      <div
-        className="bg-white rounded-3xl shadow-lg w-52 h-96 flex flex-col items-center justify-between p-4 mb-4 hover:scale-105 transition-transform duration-300 relative"
-        style={style}
-      >
-        {/* Gambar */}
-        <div className="flex-grow flex items-center justify-center w-full">
-          <img src={imageSrc} alt={title} className="w-full object-cover rounded-xl" />
-        </div>
-
-        {/* Judul */}
-        <h2 className="text-gray-800 font-semibold text-lg mt-2">{title}</h2>
-
-        {/* Efek Biru di Bawah Card */}
-        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-[#3D72B4] to-[#A0A9FF] h-8 rounded-b-3xl"></div>
-      </div>
-
-      {/* Tombol di bawah card */}
+<section className="min-h-screen bg-gradient-to-b from-[#1E498E] to-[#A0A9FF] pt-32" id='Komunitas'>
+  <h1 className="text-5xl font-bold text-white mb-12 text-center">Komunitas</h1>
+  <div className="flex flex-col justify-center sm:flex-row gap-36 h-auto items-center">
+    {/* Card Teman Dukungan */}
+    <div className="flex flex-col items-center">
+    <div className="bg-white p-6 rounded-3xl shadow-lg w-96 text-center min-h-[400px] flex flex-col transform transition-transform duration-300 hover:scale-95">
+  <h2 className="text-xl font-extrabold text-[#2A386A] mb-4">Teman Dukungan</h2> {/* Menambahkan margin-bottom */}
+  <div>
+    <img
+      src={Komunitas2} // Ganti dengan path gambar Teman Dukungan
+      alt="Teman Dukungan"
+      className="mx-auto mb-4"
+    />
+    <p className="text-gray-600 mb-6">
+      Pengguna bisa berinteraksi dengan sesama yang memiliki pengalaman atau kondisi serupa, di mana mereka bisa saling berbagi pengalaman atau tips kesehatan mental.
+    </p>
+  </div>
+</div>
+      {/* Tombol di luar card Teman Dukungan */}
       <button className="bg-blue-100 items-center justify-center flex mx-auto text-blue-600 font-bold px-4 py-1 mt-2 rounded-lg hover:bg-blue-200 transition duration-300">
         Cari Artikel
       </button>
     </div>
-  );
-}
 
-function ArticleSection() {
-  // Data untuk card (judul dan gambar)
-  const artikelData = [
-    { title: "Depresi", imageSrc: Depresi, style: { marginTop: '0px' } },
-    { title: "Stress", imageSrc: Stress, style: { marginTop: '50px' } },
-    { title: "MoodSwing", imageSrc: Moodswing, style: { marginTop: '150px' } },
-    { title: "Trauma", imageSrc: Trauma, style: { marginTop: '100px' } },
-    { title: "Kecanduan", imageSrc: Kecanduan, style: { marginTop: '0px' } },
-  ];
+    {/* Card Bagikan Cerita */}
+    <div className="flex flex-col items-center">
+      <div className="bg-white p-6 rounded-3xl shadow-lg w-96 text-center min-h-[400px] flex flex-col justify-between transform transition-transform duration-300 hover:scale-95">
+      <h2 className="text-xl font-extrabold text-[#2A386A] mb-4">Bagikan Cerita</h2>
+        <div>
+          <img
+            src={Komunitas1} // Ganti dengan path gambar Bagikan Cerita
+            alt="Bagikan Cerita"
+            className="mx-auto mb-4"
+          />
 
-  return (
-    <section className="min-h-screen bg-gradient-to-b from-[#1E498E] to-[#A0A9FF] flex flex-col items-center py-16 pt-24">
-      <h1 className="text-4xl font-bold text-white mb-12">Ayo Kenali Artikel!</h1>
-      <div className="flex flex-wrap justify-center gap-8">
-        {artikelData.map((artikel, index) => (
-          <ArtikelCard key={index} title={artikel.title} imageSrc={artikel.imageSrc} style={artikel.style} />
-        ))}
+          <p className="text-gray-600 mb-6">
+            Pengguna dapat merekam "cerita" mereka dari awal hingga akhir perjalanan mental mereka, yang bersifat pribadi atau bisa di-share secara anonim untuk inspirasi orang lain.
+          </p>
+        </div>
       </div>
-    </section>
-  );
+      {/* Tombol di luar card Bagikan Cerita */}
+      <button className="bg-white font-bold text-blue-500 px-6 py-1 mt-4 rounded-lg hover:bg-[#A0A9FF] hover:opacity-90 duration-500 ease-in-out transition">
+        Bagikan Cerita
+      </button>
+    </div>
+  </div>
+</section>
+
+  )
 }
 
-export default ArticleSection;
+export default CommunitySection

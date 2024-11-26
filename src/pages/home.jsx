@@ -386,7 +386,7 @@ export default function Home() {
         <ConsultationSection />
       </div>
           <div>
-            <CommunitySection />
+            <CommunitySection/>
           </div>
           <div>
             <ArticleSection/>
