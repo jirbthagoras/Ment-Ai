@@ -1,4 +1,3 @@
-import React from 'react'
 import Komunitas1 from '../assets/komunitas-1.png'
 import Komunitas2 from '../assets/komunitas2.png'
 const CommunitySection = () => {

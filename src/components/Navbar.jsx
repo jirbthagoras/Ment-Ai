@@ -54,7 +54,7 @@ const Navbar = () => {
 
   const navItems = [
     { label: 'Beranda', path: '/' },
-    { label: 'Komunitas', path: '/komunitas' },
+    { label: 'Komunitas', path: '/komunitasmental' },
     { label: 'Layanan Konsultasi', path: '/Konsultasi' },
     { label: 'DrMen', path: '/aipage' },
   ];

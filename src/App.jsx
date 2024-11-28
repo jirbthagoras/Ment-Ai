@@ -16,6 +16,12 @@ import Konsultasi from './pages/konsultasi';
 import PropTypes from 'prop-types';
 import Profile from './pages/profile';
 import AdminChat from './pages/AdminChat';
+import RuangKonsultasi from './pages/ConsultationRoom';
+import KomunitasMental from './pages/komunitas/KomunitasMental'
+import BagikanCerita from './pages/komunitas/story/BagikanCerita';
+import EditStory from './pages/komunitas/story/EditStory';
+import StoryDetail from './pages/komunitas/story/StoryDetail';
+
 
 // Protected Route Component
 const AdminRoute = ({ children }) => {
@@ -86,6 +92,7 @@ function App() {
         <Route path="/Register" element={<Login />} />
         <Route path="/complete-profile" element={<ComProfile/>} />
         <Route path="/Konsultasi" element={<Konsultasi/>}/>
+        <Route path="/RuangKonsultasi" element={<RuangKonsultasi/>}/>
         <Route 
           path="/admin"
           element={
@@ -104,6 +111,10 @@ function App() {
         />
         <Route path="/aipage" element={<AiPage />} />
         <Route path="/profile" element={<Profile />} />
+        <Route path="/KomunitasMental" element={<KomunitasMental />} />
+        <Route path="/BagikanCerita" element={<BagikanCerita />} />
+        <Route path="/edit-story/:storyId" element={<EditStory />} />
+        <Route path="/story/:storyId" element={<StoryDetail />} />
       </Routes>
       <Footer />
     </Router>

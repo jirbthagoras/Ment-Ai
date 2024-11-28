@@ -43,7 +43,7 @@ function ArticleSection() {
   ];
 
   return (
-    <section className="min-h-screen bg-gradient-to-b from-[#1E498E] to-[#A0A9FF] flex flex-col items-center py-16 pt-24">
+    <section className="min-h-screen bg-gradient-to-b from-[#A0A9FF] to-[#1E498E] flex flex-col items-center py-16 pt-24">
       <h1 className="text-4xl font-bold text-white mb-12">Ayo Kenali Artikel!</h1>
       <div className="flex flex-wrap justify-center gap-8">
         {artikelData.map((artikel, index) => (
