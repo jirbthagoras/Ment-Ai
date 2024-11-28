@@ -69,7 +69,7 @@ export default function AiPage() {
         setIsTalking(false);
         const response = await groq.chat.completions.create({
           messages: [
-            { role: "system", content: "Bayangkan dirimu adalah seorang dokter psikiater yang bijaksana berwujud seekor burung hantu. Namamu adalah Dr. Hoot, dan kau memiliki sayap penuh kasih serta mata yang tajam dan penuh perhatian. Kau tinggal di sebuah ruang praktik yang hangat dan nyaman di dalam sebuah pohon besar, tempat pasien-pasienmu datang untuk bercerita dan mencurahkan isi hati. Kau sangat mencintai pekerjaanmu sebagai pendengar yang baik, memberikan nasihat yang lembut namun bermakna, serta membantu mereka menemukan ketenangan. Gunakan bahasa Indonesia yang baik dan benar saat berbicara, sehingga setiap pasien merasa dihargai dan dipahami." },
+            { role: "system", content: "Bayangkan dirimu adalah seorang dokter psikiater yang bijaksana berwujud seekor burung hantu. Namamu adalah Dr. Men, dan kau memiliki sayap penuh kasih serta mata yang tajam dan penuh perhatian. Kau tinggal di sebuah ruang praktik yang hangat dan nyaman di dalam sebuah pohon besar, tempat pasien-pasienmu datang untuk bercerita dan mencurahkan isi hati. Kau sangat mencintai pekerjaanmu sebagai pendengar yang baik, memberikan nasihat yang lembut namun bermakna, serta membantu mereka menemukan ketenangan. Gunakan bahasa Indonesia yang baik dan benar saat berbicara, sehingga setiap pasien merasa dihargai dan dipahami." },
             ...newMessages.map((msg) => ({
               role: msg.sender === "Dr. Men" ? "assistant" : "user",
               content: msg.text,
@@ -80,15 +80,29 @@ export default function AiPage() {
 
         const aiReply = response.choices[0]?.message?.content || "Maaf, saya tidak bisa merespon saat ini.";
         
+        // Start talking animation
         setIsTalking(true);
-        setTimeout(() => {
-          setIsTyping(false);
-          setChatMessages([
-            ...newMessages,
-            { id: newMessages.length + 1, sender: "Dr. Men", text: aiReply },
-          ]);
-          setTimeout(() => setIsTalking(false), 3000);
-        }, 1000);
+        setIsTyping(false);
+
+        // Show typing effect gradually over 10 seconds
+        let currentText = "";
+        const words = aiReply.split(" ");
+        const timePerWord = 10000 / words.length; // Distribute words over 10 seconds
+
+        words.forEach((word, index) => {
+          setTimeout(() => {
+            currentText += (index === 0 ? "" : " ") + word;
+            setChatMessages([
+              ...newMessages,
+              { id: newMessages.length + 1, sender: "Dr. Men", text: currentText },
+            ]);
+
+            // Stop talking animation after last word
+            if (index === words.length - 1) {
+              setTimeout(() => setIsTalking(false), 1000);
+            }
+          }, timePerWord * index);
+        });
 
       } catch (error) {
         console.error("Error fetching AI response:", error);
@@ -229,7 +243,7 @@ export default function AiPage() {
               <motion.img
                 whileHover={{ scale: 1.05, rotate: [0, -5, 5, 0] }}
                 transition={{ type: "spring", stiffness: 400, damping: 10 }}
-                src={isTalking ? "src/assets/gif/Talking.gif" : "src/assets/gif/Idle.gif"}
+                src={isTalking ? "src/assets/gif/TalkAni.gif" : "src/assets/gif/IdleAni.gif"}
                 alt="Dr. Men - Owl Doctor Character"
                 className="bg-transparent w-full max-w-md mx-auto drop-shadow-2xl"
               />

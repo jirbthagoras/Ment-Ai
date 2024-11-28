@@ -1,0 +1,43 @@
+{
+  "rules": {
+    "likes": {
+      "$postId": {
+        ".read": true,
+        "$userId": {
+          ".write": "auth != null && auth.uid == $userId",
+          ".validate": "newData.isBoolean()"
+        }
+      }
+    },
+    "appointments": {
+      ".read": "auth != null",
+      ".write": "auth != null",
+      "$appointmentId": {
+        ".validate": "newData.hasChildren(['date', 'times', 'doctor', 'patientName', 'status'])"
+      }
+    },
+    "chats": {
+      "$appointmentId": {
+        ".read": "auth != null",
+        ".write": "auth != null",
+        "messages": {
+          "$messageId": {
+            ".validate": "newData.hasChildren(['text', 'senderId', 'timestamp'])"
+          }
+        }
+      }
+    },
+    "userStatus": {
+      "$userId": {
+        ".read": true,
+        ".write": "auth != null && auth.uid == $userId",
+        "lastOnline": {
+          ".validate": "newData.isNumber()"
+        },
+        "isOnline": {
+          ".validate": "newData.isBoolean()"
+        }
+      }
+    }
+  }
+} 

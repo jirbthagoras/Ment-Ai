@@ -135,7 +135,7 @@ export default function Home() {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#FFA7D0] via-[#1E498E] to-[#A0A9FF] font-jakarta">
+    <div className="min-h-screen bg-gradient-to-b from-[#FFA7D0] via-[#1E498E] to-[#1E498E] font-jakarta">
 
       <motion.div
         className="relative min-h-screen overflow-hidden"
