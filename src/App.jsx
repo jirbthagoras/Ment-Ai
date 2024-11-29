@@ -21,6 +21,9 @@ import KomunitasMental from './pages/komunitas/KomunitasMental'
 import BagikanCerita from './pages/komunitas/story/BagikanCerita';
 import EditStory from './pages/komunitas/story/EditStory';
 import StoryDetail from './pages/komunitas/story/StoryDetail';
+import TemanDukungan from './pages/komunitas/group/TemanDukungan';
+import { AuthProvider } from './contexts/AuthContext';
+import PostDetail from './pages/komunitas/group/PostDetail';
 
 
 // Protected Route Component
@@ -84,40 +87,44 @@ AdminRoute.propTypes = {
 
 function App() {
   return (
-    <Router>
-      <Navbar/>
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/Login" element={<Login />} />
-        <Route path="/Register" element={<Login />} />
-        <Route path="/complete-profile" element={<ComProfile/>} />
-        <Route path="/Konsultasi" element={<Konsultasi/>}/>
-        <Route path="/RuangKonsultasi" element={<RuangKonsultasi/>}/>
-        <Route 
-          path="/admin"
-          element={
-            <AdminRoute>
-              <Admin />
-            </AdminRoute>
-          } 
-        />
-        <Route 
-          path="/adminchat"
-          element={
-            <AdminRoute>
-              <AdminChat />
-            </AdminRoute>
-          } 
-        />
-        <Route path="/aipage" element={<AiPage />} />
-        <Route path="/profile" element={<Profile />} />
-        <Route path="/KomunitasMental" element={<KomunitasMental />} />
-        <Route path="/BagikanCerita" element={<BagikanCerita />} />
-        <Route path="/edit-story/:storyId" element={<EditStory />} />
-        <Route path="/story/:storyId" element={<StoryDetail />} />
-      </Routes>
-      <Footer />
-    </Router>
+    <AuthProvider>
+      <Router>
+        <Navbar/>
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/Login" element={<Login />} />
+          <Route path="/Register" element={<Login />} />
+          <Route path="/complete-profile" element={<ComProfile/>} />
+          <Route path="/Konsultasi" element={<Konsultasi/>}/>
+          <Route path="/RuangKonsultasi" element={<RuangKonsultasi/>}/>
+          <Route 
+            path="/admin"
+            element={
+              <AdminRoute>
+                <Admin />
+              </AdminRoute>
+            } 
+          />
+          <Route 
+            path="/adminchat"
+            element={
+              <AdminRoute>
+                <AdminChat />
+              </AdminRoute>
+            } 
+          />
+          <Route path="/aipage" element={<AiPage />} />
+          <Route path="/profile" element={<Profile />} />
+          <Route path="/KomunitasMental" element={<KomunitasMental />} />
+          <Route path="/BagikanCerita" element={<BagikanCerita />} />
+          <Route path="/edit-story/:storyId" element={<EditStory />} />
+          <Route path="/story/:storyId" element={<StoryDetail />} />
+          <Route path="/teman-dukungan" element={<TemanDukungan />} />
+          <Route path="/komunitas/post/:postId" element={<PostDetail />} />
+        </Routes>
+        <Footer />
+      </Router>
+    </AuthProvider>
   );
 }
 
