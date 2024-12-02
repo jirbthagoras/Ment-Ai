@@ -1,9 +1,9 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { FaUser, FaClock, FaChevronLeft, FaChevronRight, FaCheckCircle } from 'react-icons/fa'
+import { FaUser, FaChevronLeft, FaChevronRight, FaCheckCircle } from 'react-icons/fa'
 import { useState, useEffect, useCallback } from 'react'
-import { auth } from '../firebase'
+import { auth } from '../../firebase'
 import { onAuthStateChanged } from 'firebase/auth'
 import PropTypes from 'prop-types'
 import { 
@@ -11,7 +11,7 @@ import {
   saveAppointment, 
   validateBookingData, 
   createBookingData 
-} from '../services/consultationService'
+} from '../../services/consultationService'
 
 const CONSULTATION_PRICE = 25000;
 
@@ -231,7 +231,7 @@ export default function Konsultasi() {
                   selectedPayment === 'BCA' ? 'border-blue-500' : 'border-gray-200'
                 }`}
               >
-                <img src="src/assets/logo/logobca.png" alt="BCA" className="h-8 mx-auto" />
+                <img src="src\assets\logo\logobca.png" alt="BCA" className="h-8 mx-auto" />
               </motion.button>
 
               <motion.button
@@ -242,7 +242,7 @@ export default function Konsultasi() {
                   selectedPayment === 'Gopay' ? 'border-blue-500' : 'border-gray-200'
                 }`}
               >
-                <img src="src/assets/logo/logo-gopay-vector.png" alt="Gopay" className="h-8 mx-auto" />
+                <img src="src\assets\logo\logo-gopay-vector.png" alt="Gopay" className="h-8 mx-auto" />
               </motion.button>
             </div>
 

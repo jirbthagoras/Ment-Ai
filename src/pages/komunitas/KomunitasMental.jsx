@@ -53,6 +53,7 @@ const KomunitasMental = () => {
             </p>
             
             <button 
+              onClick={() => navigate('/teman-dukungan')}
               className="w-full bg-white/10 backdrop-blur text-white font-medium px-6 py-3.5 rounded-xl
                          border border-white/20 transition-all duration-300 
                          hover:bg-white hover:text-blue-600 hover:shadow-lg 

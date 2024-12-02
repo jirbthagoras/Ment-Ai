@@ -162,7 +162,7 @@ const Footer = () => {
           className="border-t border-white/10 mt-12 pt-8 text-center"
         >
           <p className="text-sm text-white/60">
-            © {new Date().getFullYear()} Ment'Ai. All rights reserved.
+            © {new Date().getFullYear()} Ment&apos;Ai. All rights reserved.
           </p>
         </motion.div>
       </div>

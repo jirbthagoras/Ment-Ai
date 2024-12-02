@@ -1,49 +1,75 @@
-import { useState, useEffect, useMemo } from 'react';
-import { auth, db } from '../firebase';
-import { updateProfile } from 'firebase/auth';
-import { getDoc, doc, updateDoc } from 'firebase/firestore';
-import { format, addMinutes, subMinutes, isWithinInterval } from 'date-fns';
-import { motion } from 'framer-motion';
-import { ref, set, orderByChild, equalTo, onValue, query as dbQuery } from 'firebase/database';
-import { realtimeDb } from '../firebase';
+import { useState, useEffect } from 'react';
+import { auth } from '../../../firebase';
+import { format } from 'date-fns';
+import { motion, AnimatePresence } from 'framer-motion';
+import { ref, set, push } from 'firebase/database';
+import { realtimeDb } from '../../../firebase';
 import PropTypes from 'prop-types';
+import { fetchUserProfile, updateUserProfile, setupConsultationListener } from '../../../services/profileService';
+import { useNavigate } from 'react-router-dom';
+import { FaCheckCircle, FaClock, FaCalendarAlt, FaPlay, FaStethoscope, FaClinicMedical, FaChevronUp, FaChevronDown, FaHourglassHalf, FaUserMd } from 'react-icons/fa';
+import { id } from 'date-fns/locale';
+
+// Add this helper function at the top of the file
+const isPastConsultation = (consultationDate) => {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0); // Reset time to start of day
+  const consultDate = new Date(consultationDate);
+  consultDate.setHours(0, 0, 0, 0);
+  return consultDate < today;
+};
 
 // Add this new component for the consultation room button
 const ConsultationRoomButton = ({ consultation }) => {
-  const [isWithinWindow, setIsWithinWindow] = useState(false);
-  
-  useEffect(() => {
-    const checkTimeWindow = () => {
-      const now = new Date();
-      const consultTime = new Date(`${consultation.date}T${consultation.time}`);
-      const windowStart = subMinutes(consultTime, 5);
-      const windowEnd = addMinutes(consultTime, 60); // 1-hour session
+  const navigate = useNavigate();
 
-      setIsWithinWindow(isWithinInterval(now, { start: windowStart, end: windowEnd }));
-    };
+  const handleJoinRoom = async () => {
+    try {
+      if (consultation.status === 'completed') {
+        alert('Konsultasi telah selesai');
+        return;
+      }
 
-    checkTimeWindow();
-    const interval = setInterval(checkTimeWindow, 30000); // Check every 30 seconds
+      // Navigate to consultation room
+      navigate(`/ruang-konsultasi-user/${consultation.id}`, {
+        state: {
+          appointmentId: consultation.id,
+          doctorName: consultation.doctor,
+          appointmentDetails: {
+            date: consultation.date,
+            time: Array.isArray(consultation.times) ? consultation.times[0] : consultation.time,
+            status: consultation.status,
+            patientId: auth.currentUser.uid,
+            patientName: auth.currentUser.displayName || 'Patient'
+          }
+        }
+      });
+    } catch (err) {
+      console.error('Error joining room:', err);
+    }
+  };
 
-    return () => clearInterval(interval);
-  }, [consultation]);
+  const getButtonStyle = () => {
+    return consultation.status === 'completed'
+      ? 'bg-gray-500 hover:bg-gray-600 cursor-not-allowed'
+      : 'bg-blue-600 hover:bg-blue-700';
+  };
 
-  const handleJoinRoom = () => {
-    window.location.href = `/consultation-room/${consultation.id}`;
+  const getButtonText = () => {
+    return consultation.status === 'completed'
+      ? 'Konsultasi Selesai'
+      : 'Masuk ke Ruang Konsultasi';
   };
 
   return (
     <motion.button
-      whileHover={{ scale: 1.05 }}
-      whileTap={{ scale: 0.95 }}
+      whileHover={{ scale: consultation.status !== 'completed' ? 1.05 : 1 }}
+      whileTap={{ scale: consultation.status !== 'completed' ? 0.95 : 1 }}
       onClick={handleJoinRoom}
-      disabled={!isWithinWindow}
-      className={`w-full py-2 px-4 rounded-lg text-white font-medium
-        ${isWithinWindow 
-          ? 'bg-blue-600 hover:bg-blue-700' 
-          : 'bg-gray-300 cursor-not-allowed'}`}
+      disabled={consultation.status === 'completed'}
+      className={`w-full py-2 px-4 rounded-lg text-white font-medium transition-all duration-200 ${getButtonStyle()}`}
     >
-      {isWithinWindow ? 'Bergabung ke Ruangan Konsultasi' : 'Ruangan tidak tersedia'}
+      {getButtonText()}
     </motion.button>
   );
 };
@@ -52,127 +78,250 @@ ConsultationRoomButton.propTypes = {
   consultation: PropTypes.shape({
     id: PropTypes.string.isRequired,
     date: PropTypes.string.isRequired,
-    time: PropTypes.string.isRequired
+    times: PropTypes.arrayOf(PropTypes.string),
+    time: PropTypes.string,
+    patientName: PropTypes.string,
+    doctor: PropTypes.string,
+    status: PropTypes.string
   }).isRequired
 };
 
 // Add this new component for the Booking Card
 const BookingCard = ({ consultation }) => {
-  const [timeStatus, setTimeStatus] = useState('not-started');
-  
-  // Safely parse the date
-  const consultationDate = useMemo(() => {
-    try {
-      // Check if date is ISO string or timestamp
-      const date = new Date(consultation.date);
-      if (isNaN(date.getTime())) {
-        console.error('Invalid date:', consultation.date);
-        return new Date(); // Fallback to current date
-      }
-      return date;
-    } catch (error) {
-      console.error('Error parsing date:', error);
-      return new Date(); // Fallback to current date
-    }
-  }, [consultation.date]);
+  const [isExpanded, setIsExpanded] = useState(false);
 
-  const isToday = useMemo(() => {
-    try {
-      return format(consultationDate, 'yyyy-MM-dd') === format(new Date(), 'yyyy-MM-dd');
-    } catch (error) {
-      console.error('Error comparing dates:', error);
-      return false;
-    }
-  }, [consultationDate]);
-
-  useEffect(() => {
-    const checkTimeStatus = () => {
-      try {
-        const now = new Date();
-        const [hours, minutes] = (consultation.time || '00:00').split(':');
-        const consultTime = new Date(consultationDate);
-        consultTime.setHours(parseInt(hours, 10), parseInt(minutes, 10), 0);
-        
-        const windowStart = subMinutes(consultTime, 5);
-        const windowEnd = addMinutes(consultTime, 60);
-
-        if (isWithinInterval(now, { start: windowStart, end: windowEnd })) {
-          setTimeStatus('active');
-        } else if (now > windowEnd) {
-          setTimeStatus('ended');
-        } else {
-          setTimeStatus('not-started');
-        }
-      } catch (error) {
-        console.error('Error checking time status:', error);
-        setTimeStatus('error');
+  const getStatusTag = () => {
+    const statusConfig = {
+      completed: { 
+        text: 'Selesai', 
+        style: 'bg-green-100 text-green-800 border-green-300',
+        icon: <FaCheckCircle className="text-green-500" />
+      },
+      'in-progress': { 
+        text: 'Konsultasi Berlangsung', 
+        style: 'bg-yellow-100 text-yellow-800 border-yellow-300',
+        icon: <FaClock className="text-yellow-500" />
+      },
+      ready: { 
+        text: 'Siap Dimulai', 
+        style: 'bg-blue-100 text-blue-800 border-blue-300',
+        icon: <FaPlay className="text-blue-500" />
+      },
+      pending: { 
+        text: 'Menunggu', 
+        style: 'bg-gray-100 text-gray-800 border-gray-300',
+        icon: <FaHourglassHalf className="text-gray-500" />
       }
     };
+    return statusConfig[consultation.status] || statusConfig.pending;
+  };
 
-    checkTimeStatus();
-    const interval = setInterval(checkTimeStatus, 30000);
-    return () => clearInterval(interval);
-  }, [consultation, consultationDate]);
+  const getTimeRemaining = (consultationDate, consultationTime) => {
+    const now = new Date();
+    const [hours, minutes] = consultationTime.split(':');
+    const consultation = new Date(consultationDate);
+    consultation.setHours(parseInt(hours), parseInt(minutes), 0);
+    
+    const endTime = new Date(consultation);
+    endTime.setHours(endTime.getHours() + 1); // 60-minute session
+
+    if (now >= consultation && now < endTime) {
+      const remainingMins = Math.floor((endTime - now) / (1000 * 60));
+      return `${remainingMins} menit tersisa`;
+    }
+
+    const diff = consultation - now;
+    if (diff < 0) return 'Sesi telah berakhir';
+    
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    const hrs = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+
+    if (days > 0) return `Dimulai dalam ${days} hari`;
+    if (hrs > 0) return `Dimulai dalam ${hrs} jam`;
+    if (mins > 0) return `Dimulai dalam ${mins} menit`;
+    return 'Akan segera dimulai';
+  };
+
+  const { text, style, icon } = getStatusTag();
 
   return (
     <motion.div
-      whileHover={{ scale: 1.02 }}
-      className="bg-white rounded-xl shadow-lg p-6 mb-4"
+      layout
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden hover:shadow-lg transition-all duration-300"
     >
-      <div className="flex justify-between items-start mb-4">
-        <div>
-          <h3 className="text-lg font-semibold text-gray-900">
-            Konsultasi dengan {consultation.doctor || 'Unknown Doctor'}
-          </h3>
-          <p className="text-sm text-gray-500">
-            {(() => {
-              try {
-                return format(consultationDate, 'EEEE, dd MMMM yyyy')
-              } catch (error) {
-                console.error('Error formatting date:', error)
-                return 'Invalid Date'
-              }
-            })()}
-          </p>
-          <p className="text-sm text-gray-500">
-            Time: {consultation.time || 'Not specified'}
-          </p>
-          {consultation.totalAmount && (
-            <p className="text-sm text-gray-500">
-              Amount: Rp{consultation.totalAmount.toLocaleString('id-ID')}
-            </p>
-          )}
+      {/* Header Section */}
+      <div className="p-5 bg-gradient-to-r from-blue-50 via-blue-100 to-blue-50">
+        <div className="flex justify-between items-start mb-4">
+          <div className="flex items-center gap-3">
+            <div className="p-3 bg-white rounded-lg shadow-sm">
+              <FaUserMd className="text-2xl text-blue-600" />
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900">
+                Konsultasi dengan {consultation.doctor}
+              </h3>
+              <div className="flex items-center gap-2 text-sm text-gray-600 mt-1">
+                <FaCalendarAlt className="text-blue-500" />
+                {format(new Date(consultation.date), 'EEEE, dd MMMM yyyy', { locale: id })}
+              </div>
+            </div>
+          </div>
+          <span className={`flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium border ${style}`}>
+            {icon}
+            {text}
+          </span>
         </div>
-        <ConsultationStatus 
-          status={consultation.status} 
-          timeStatus={timeStatus}
-        />
+
+        {/* Time and Session Info */}
+        <div className="grid grid-cols-2 gap-4 mt-4">
+          <div className="bg-white/60 rounded-lg p-3">
+            <div className="flex items-center gap-2 text-gray-700 mb-1">
+              <FaClock className="text-blue-500" />
+              <span className="font-medium">Waktu Sesi</span>
+            </div>
+            <p className="text-gray-800">
+              {Array.isArray(consultation.times) ? consultation.times[0] : consultation.time}
+            </p>
+            <p className="text-sm text-blue-600 mt-1">
+              Durasi: 60 menit
+            </p>
+          </div>
+          <div className="bg-white/60 rounded-lg p-3">
+            <div className="flex items-center gap-2 text-gray-700 mb-1">
+              <FaHourglassHalf className="text-blue-500" />
+              <span className="font-medium">Status Waktu</span>
+            </div>
+            <p className="text-gray-800">
+              {getTimeRemaining(consultation.date, Array.isArray(consultation.times) ? consultation.times[0] : consultation.time)}
+            </p>
+          </div>
+        </div>
       </div>
 
-      {consultation.status === 'pending' && isToday && (
-        <ConsultationRoomButton consultation={consultation} />
-      )}
-
-      {consultation.status === 'completed' && consultation.summary && (
-        <div className="mt-4 p-4 bg-gray-50 rounded-lg">
-          <h4 className="font-medium text-gray-900 mb-2">Consultation Summary</h4>
-          <p className="text-sm text-gray-600">{consultation.summary}</p>
+      {/* Main Content */}
+      <div className="p-5">
+        {/* Quick Info */}
+        <div className="grid grid-cols-2 gap-4 mb-4">
+          <div className="bg-gray-50 rounded-lg p-3">
+            <div className="flex items-center gap-2 text-gray-700 mb-1">
+              <FaStethoscope className="text-blue-500" />
+              <span className="font-medium">Jenis Konsultasi</span>
+            </div>
+            <p className="text-gray-800">
+              {consultation.type || 'Konsultasi Umum'}
+            </p>
+          </div>
+          <div className="bg-gray-50 rounded-lg p-3">
+            <div className="flex items-center gap-2 text-gray-700 mb-1">
+              <FaClinicMedical className="text-blue-500" />
+              <span className="font-medium">Ruang Konsultasi</span>
+            </div>
+            <p className="text-gray-800">
+              #{consultation.roomId?.slice(0, 6) || 'Sesi Belum Tersedia'}
+            </p>
+          </div>
         </div>
-      )}
+
+        {/* Expandable Section */}
+        <div className="mt-4 pt-4 border-t border-gray-100">
+          <button
+            onClick={() => setIsExpanded(!isExpanded)}
+            className="w-full flex items-center justify-center gap-2 text-sm text-gray-600 hover:text-gray-800"
+          >
+            {isExpanded ? (
+              <>
+                <FaChevronUp className="text-blue-500" />
+                Sembunyikan detail
+              </>
+            ) : (
+              <>
+                <FaChevronDown className="text-blue-500" />
+                Lihat detail
+              </>
+            )}
+          </button>
+
+          <AnimatePresence>
+            {isExpanded && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.3 }}
+                className="mt-4 space-y-4"
+              >
+                {/* Consultation Details */}
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <h4 className="text-sm font-semibold text-gray-700 mb-3">Detail Konsultasi</h4>
+                  <div className="space-y-2">
+                    <p className="text-sm text-gray-600">
+                      <span className="font-medium">Keluhan:</span><br />
+                      {consultation.complaints || 'Tidak ada keluhan yang dicatat'}
+                    </p>
+                    <p className="text-sm text-gray-600">
+                      <span className="font-medium">Catatan Dokter:</span><br />
+                      {consultation.doctorNotes || 'Belum ada catatan dari dokter'}
+                    </p>
+                    <p className="text-sm text-gray-600">
+                      <span className="font-medium">Rekomendasi:</span><br />
+                      {consultation.recommendations || 'Belum ada rekomendasi'}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Additional Information */}
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <h4 className="text-sm font-semibold text-gray-700 mb-3">Informasi Tambahan</h4>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-sm text-gray-600">
+                        <span className="font-medium">Dibuat pada:</span><br />
+                        {format(new Date(consultation.createdAt || Date.now()), 'dd MMM yyyy HH:mm', { locale: id })}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-600">
+                        <span className="font-medium">Terakhir diupdate:</span><br />
+                        {consultation.updatedAt ? 
+                          format(new Date(consultation.updatedAt), 'dd MMM yyyy HH:mm', { locale: id }) : 
+                          'Belum ada update'}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+
+        {/* Action Button */}
+        <div className="mt-4">
+          <ConsultationRoomButton consultation={consultation} />
+        </div>
+      </div>
     </motion.div>
   );
 };
 
-// Update PropTypes to make some fields optional
+// Update PropTypes
 BookingCard.propTypes = {
   consultation: PropTypes.shape({
     id: PropTypes.string.isRequired,
+    doctor: PropTypes.string.isRequired,
     date: PropTypes.string.isRequired,
+    times: PropTypes.arrayOf(PropTypes.string),
     time: PropTypes.string,
-    doctor: PropTypes.string,
-    status: PropTypes.string,
-    totalAmount: PropTypes.number,
-    summary: PropTypes.string
+    status: PropTypes.string.isRequired,
+    type: PropTypes.string,
+    roomId: PropTypes.string,
+    complaints: PropTypes.string,
+    doctorNotes: PropTypes.string,
+    recommendations: PropTypes.string,
+    createdAt: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    updatedAt: PropTypes.oneOfType([PropTypes.string, PropTypes.number])
   }).isRequired
 };
 
@@ -298,8 +447,8 @@ export default function Profile() {
   const [activeTab, setActiveTab] = useState('profile');
   const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [isAuthChecked, setIsAuthChecked] = useState(false);
   const [error, setError] = useState(null);
-  const [bookedSlots, setBookedSlots] = useState({});
   const [upcomingConsultations, setUpcomingConsultations] = useState([]);
   const [recentActivity, setRecentActivity] = useState([]);
   const [stats, setStats] = useState({
@@ -330,144 +479,15 @@ export default function Profile() {
 
   const fetchUserData = async () => {
     try {
-      const currentUser = auth.currentUser;
-      if (!currentUser) {
-        throw new Error("No user is currently logged in.");
-      }
-
-      // Fetch user data from Firestore
-      const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
-      if (!userDoc.exists()) {
-        throw new Error("User data does not exist.");
-      }
-      const userData = userDoc.data();
-
-      // Update user state with merged data
+      const userData = await fetchUserProfile();
       setUser(prev => ({
         ...prev,
-        ...userData,
-        email: currentUser.email || userData.email,
-        displayName: currentUser.displayName || userData.displayName,
-        username: userData.username || currentUser.displayName,
+        ...userData
       }));
-
     } catch (err) {
       setError('Failed to load profile data: ' + err.message);
       console.error('Error fetching user data:', err);
     }
-  };
-
-  // Add this function to process consultation data
-  const processConsultationData = (consultations) => {
-    const now = new Date();
-    
-    // Filter and sort upcoming consultations
-    const upcoming = consultations
-      .filter(consultation => {
-        const consultDate = new Date(consultation.date);
-        return consultation.status === 'pending' && consultDate >= now;
-      })
-      .sort((a, b) => new Date(a.date) - new Date(b.date));
-
-    // Get recent activity (last 3 consultations of any status)
-    const recent = [...consultations]
-      .sort((a, b) => new Date(b.date) - new Date(a.date))
-      .slice(0, 3);
-
-    // Calculate stats
-    const stats = {
-      totalSessions: consultations.length,
-      nextSession: upcoming[0] || null,
-      totalAmount: consultations.reduce((sum, c) => sum + (c.totalAmount || 0), 0)
-    };
-
-    return { upcoming, recent, stats };
-  };
-
-  // Update the setupConsultationListener function
-  const setupConsultationListener = () => {
-    try {
-      const currentUser = auth.currentUser;
-      if (!currentUser) return;
-
-      const appointmentsRef = ref(realtimeDb, 'appointments');
-      const userAppointmentsQuery = dbQuery(
-        appointmentsRef,
-        orderByChild('userId'),
-        equalTo(currentUser.uid)
-      );
-
-      return onValue(userAppointmentsQuery, (snapshot) => {
-        const appointments = [];
-        const slots = {};
-        
-        snapshot.forEach((childSnapshot) => {
-          const appointment = {
-            id: childSnapshot.key,
-            ...childSnapshot.val()
-          };
-          
-          // Validate appointment data
-          if (appointment.date && appointment.times && appointment.doctor) {
-            appointments.push({
-              ...appointment,
-              time: appointment.times[0], // For backward compatibility
-              status: appointment.status || 'pending'
-            });
-            
-            // Mark all time slots as booked
-            appointment.times.forEach(time => {
-              slots[`${appointment.date}_${time}`] = true;
-            });
-          }
-        });
-
-        // Process the consultation data
-        const { upcoming, recent, stats } = processConsultationData(appointments);
-        
-        setConsultationHistory(appointments);
-        setUpcomingConsultations(upcoming);
-        setRecentActivity(recent);
-        setStats(stats);
-        setBookedSlots(slots);
-      });
-
-    } catch (err) {
-      console.error('Error setting up consultation listener:', err);
-      setError('Failed to setup consultation updates');
-    }
-  };
-
-  // Combined useEffect for initial data loading
-  useEffect(() => {
-    setIsLoading(true);
-    
-    const unsubscribe = auth.onAuthStateChanged(async (user) => {
-      if (user) {
-        await fetchUserData();
-        const consultationUnsubscribe = setupConsultationListener();
-        setIsLoading(false);
-        
-        return () => {
-          if (consultationUnsubscribe) {
-            consultationUnsubscribe();
-          }
-        };
-      } else {
-        setIsLoading(false);
-        setError('Please log in to view profile');
-      }
-    });
-
-    return () => unsubscribe();
-  }, []);
-
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setUser(prev => ({
-      ...prev,
-      [name]: value
-    }));
   };
 
   const handleSubmit = async (e) => {
@@ -476,30 +496,7 @@ export default function Profile() {
     setError(null);
 
     try {
-      const currentUser = auth.currentUser;
-      if (!currentUser) throw new Error('No user logged in');
-
-      // Update Firebase Auth profile
-      await updateProfile(currentUser, {
-        displayName: user.displayName
-      });
-
-      // Update Firestore document
-      const userRef = doc(db, 'users', currentUser.uid);
-      await updateDoc(userRef, {
-        displayName: user.displayName,
-        phoneNumber: user.phoneNumber,
-        dateOfBirth: user.dateOfBirth,
-        gender: user.gender,
-        occupation: user.occupation,
-        emergencyContact: user.emergencyContact,
-        medicalHistory: user.medicalHistory,
-        currentMedications: user.currentMedications,
-        previousTherapy: user.previousTherapy,
-        mainConcerns: user.mainConcerns,
-        updatedAt: new Date().toISOString()
-      });
-
+      await updateUserProfile(user);
       setIsEditing(false);
     } catch (err) {
       setError('Failed to update profile: ' + err.message);
@@ -521,20 +518,39 @@ export default function Profile() {
       const currentUser = auth.currentUser;
       if (!currentUser) throw new Error("No authenticated user found");
 
+      // Generate unique room ID
+      const roomId = `room_${Date.now()}_${currentUser.uid}`;
+
       const bookingData = {
         date: selectedDate.toISOString(),
         time: selectedTime,
         doctor: selectedDoctor,
         userId: currentUser.uid,
         patientName: currentUser.displayName,
-        status: 'upcoming',
-        createdAt: new Date().toISOString()
+        status: 'pending',
+        createdAt: new Date().toISOString(),
+        hasRoom: true, // Room is created automatically
+        roomId: roomId,
+        roomStatus: 'ready'
       };
 
-      // Save to Realtime Database
+      // Save appointment to Realtime Database
       const appointmentsRef = ref(realtimeDb, 'appointments');
       const newAppointmentRef = push(appointmentsRef);
       await set(newAppointmentRef, bookingData);
+
+      // Create consultation room
+      const roomRef = ref(realtimeDb, `consultation-rooms/${roomId}`);
+      await set(roomRef, {
+        appointmentId: newAppointmentRef.key,
+        doctorId: selectedDoctor,
+        patientId: currentUser.uid,
+        patientName: currentUser.displayName || 'Patient',
+        status: 'ready',
+        createdAt: new Date().toISOString(),
+        messages: [],
+        participants: {}
+      });
 
       // Reset form
       setSelectedDate(null);
@@ -551,50 +567,12 @@ export default function Profile() {
     }
   };
 
-  // Update the handleAttendConsultation function
-  const handleAttendConsultation = async (consultation) => {
-    try {
-      const consultationRef = ref(realtimeDb, `appointments/${consultation.id}`);
-      
-      // Update consultation status
-      await set(consultationRef, {
-        ...consultation,
-        status: 'in-progress',
-        metadata: {
-          ...consultation.metadata,
-          lastUpdated: new Date().toISOString(),
-          lastUpdatedBy: auth.currentUser?.uid,
-          joinedAt: new Date().toISOString()
-        }
-      });
-
-      // Create consultation room data
-      const roomRef = ref(realtimeDb, `consultation-rooms/${consultation.id}`);
-      await set(roomRef, {
-        consultationId: consultation.id,
-        doctorId: consultation.doctorId,
-        patientId: consultation.userId,
-        status: 'active',
-        startedAt: new Date().toISOString(),
-        participants: {
-          [consultation.userId]: {
-            role: 'patient',
-            joinedAt: new Date().toISOString()
-          }
-        },
-        messages: [],
-        metadata: {
-          createdAt: new Date().toISOString(),
-          createdBy: auth.currentUser?.uid
-        }
-      });
-
-      // Replace router.push with window.location
-      window.location.href = `/consultation-room/${consultation.id}`;
-    } catch (err) {
-      console.error('Error joining consultation:', err);
-      setError('Failed to join consultation');
-    }
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setUser(prev => ({
+      ...prev,
+      [name]: value
+    }));
   };
 
   // Update the Quick Stats Card to show more information
@@ -637,25 +615,31 @@ export default function Profile() {
     >
       <h3 className="text-lg font-semibold text-gray-900 mb-4">Aktivitas Terbaru</h3>
       <div className="space-y-4">
-        {recentActivity.length > 0 ? (
-          recentActivity.map((consultation) => (
-            <div key={consultation.id} className="flex items-center space-x-3">
-              <div className={`w-2 h-2 rounded-full ${
-                consultation.status === 'completed' ? 'bg-green-500' : 
-                consultation.status === 'upcoming' ? 'bg-blue-500' : 
-                consultation.status === 'in-progress' ? 'bg-yellow-500' : 
-                'bg-gray-500'
-              }`} />
-              <div>
-                <p className="text-sm font-medium text-gray-900">
-                  Sesi dengan {consultation.doctor}
-                </p>
-                <p className="text-xs text-gray-500">
-                  {format(new Date(consultation.date), 'PPP')} pukul {consultation.time}
-                </p>
+        {recentActivity.filter(consultation => 
+          !isPastConsultation(consultation.date) || consultation.status === 'completed'
+        ).length > 0 ? (
+          recentActivity
+            .filter(consultation => 
+              !isPastConsultation(consultation.date) || consultation.status === 'completed'
+            )
+            .map((consultation) => (
+              <div key={consultation.id} className="flex items-center space-x-3">
+                <div className={`w-2 h-2 rounded-full ${
+                  consultation.status === 'completed' ? 'bg-green-500' : 
+                  consultation.status === 'upcoming' ? 'bg-blue-500' : 
+                  consultation.status === 'in-progress' ? 'bg-yellow-500' : 
+                  'bg-gray-500'
+                }`} />
+                <div>
+                  <p className="text-sm font-medium text-gray-900">
+                    Sesi dengan {consultation.doctor}
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    {format(new Date(consultation.date), 'PPP')} pukul {consultation.time}
+                  </p>
+                </div>
               </div>
-            </div>
-          ))
+            ))
         ) : (
           <p className="text-sm text-gray-500 text-center">Belum ada aktivitas</p>
         )}
@@ -665,19 +649,24 @@ export default function Profile() {
 
   // Update the renderUpcomingConsultations function
   const renderUpcomingConsultations = () => {
-    if (upcomingConsultations.length === 0) {
+    // Only show future consultations
+    const futureConsultations = upcomingConsultations.filter(consultation => 
+      !isPastConsultation(consultation.date)
+    );
+
+    if (futureConsultations.length === 0) {
       return (
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           className="text-center py-4 text-gray-500"
         >
-          No upcoming consultations
+          Belum ada konsultasi mendatang
         </motion.div>
       );
     }
 
-    return upcomingConsultations.map(consultation => (
+    return futureConsultations.map(consultation => (
       <BookingCard
         key={consultation.id}
         consultation={consultation}
@@ -685,16 +674,22 @@ export default function Profile() {
     ));
   };
 
+  // Update the renderConsultationHistory function
   const renderConsultationHistory = () => {
-    if (!consultationHistory.length) {
+    // Filter out past consultations that aren't marked as completed
+    const validConsultations = consultationHistory.filter(consultation => 
+      !isPastConsultation(consultation.date) || consultation.status === 'completed'
+    );
+
+    if (!validConsultations.length) {
       return (
         <div className="text-center text-gray-500 py-4">
-          No consultation history available
+          Belum ada riwayat konsultasi
         </div>
       );
     }
 
-    return consultationHistory.map(consultation => (
+    return validConsultations.map(consultation => (
       <BookingCard
         key={consultation.id}
         consultation={consultation}
@@ -702,15 +697,128 @@ export default function Profile() {
     ));
   };
 
-  if (isLoading) return (
-    <div className="flex justify-center items-center min-h-screen">
-      <motion.div
-        animate={{ rotate: 360 }}
-        transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-        className="h-12 w-12 border-b-2 border-blue-500 rounded-full"
-      />
-    </div>
-  );
+  // Separate auth check effect
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged((user) => {
+      setIsAuthChecked(true);
+      if (!user) {
+        setIsLoading(false);
+        setError('Please log in to view profile');
+      }
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  // Separate data fetching effect
+  useEffect(() => {
+    if (!isAuthChecked || !auth.currentUser) return;
+
+    const loadUserData = async () => {
+      try {
+        setIsLoading(true);
+        await fetchUserData();
+        
+        // Setup consultation listener
+        const unsubscribe = setupConsultationListener({
+          onConsultationHistory: setConsultationHistory,
+          onUpcomingConsultations: setUpcomingConsultations,
+          onRecentActivity: setRecentActivity,
+          onStats: setStats
+        });
+
+        setIsLoading(false);
+        
+        return () => {
+          if (unsubscribe) {
+            unsubscribe();
+          }
+        };
+      } catch (err) {
+        console.error('Error loading user data:', err);
+        setError('Failed to load profile data');
+        setIsLoading(false);
+      }
+    };
+
+    loadUserData();
+  }, [isAuthChecked]);
+
+  // Loading state with timeout
+  useEffect(() => {
+    const loadingTimeout = setTimeout(() => {
+      if (isLoading) {
+        setIsLoading(false);
+        setError('Loading took too long. Please refresh the page.');
+      }
+    }, 10000); // 10 second timeout
+
+    return () => clearTimeout(loadingTimeout);
+  }, [isLoading]);
+
+  if (!isAuthChecked) {
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <motion.div
+          animate={{ rotate: 360 }}
+          transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+          className="h-12 w-12 border-b-2 border-blue-500 rounded-full"
+        />
+      </div>
+    );
+  }
+
+  if (!auth.currentUser) {
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <div className="text-center">
+          <h2 className="text-xl font-semibold text-gray-800 mb-4">
+            Please Log In
+          </h2>
+          <p className="text-gray-600">
+            You need to be logged in to view your profile.
+          </p>
+          <button
+            onClick={() => window.location.href = '/login'}
+            className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            Go to Login
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <div className="text-center">
+          <h2 className="text-xl font-semibold text-red-800 mb-4">
+            Error Loading Profile
+          </h2>
+          <p className="text-gray-600">{error}</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <motion.div
+          animate={{ rotate: 360 }}
+          transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+          className="h-12 w-12 border-b-2 border-blue-500 rounded-full"
+        />
+      </div>
+    );
+  }
 
   return (
     <motion.div 

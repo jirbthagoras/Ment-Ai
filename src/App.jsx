@@ -10,17 +10,21 @@ import AiPage from './pages/aipage';
 import Navbar from "@/components/Navbar";
 import Footer from '@/components/Footer';
 import Login from'./pages/loginregis';
-import Admin from './pages/admin';
+import Admin from './pages/admin/admin';
 import ComProfile from './pages/complete-profile';
-import Konsultasi from './pages/konsultasi';
+import Konsultasi from './pages/konsultasi/konsultasi';
 import PropTypes from 'prop-types';
-import Profile from './pages/profile';
-import AdminChat from './pages/AdminChat';
-import RuangKonsultasi from './pages/ConsultationRoom';
+import Profile from './pages/konsultasi/user/profile';
+import RuangKonsultasi from './pages/admin/RuangKonsultasi';
+import RuangKonsultasiUser from './pages/konsultasi/RuangKonsultasi';
 import KomunitasMental from './pages/komunitas/KomunitasMental'
 import BagikanCerita from './pages/komunitas/story/BagikanCerita';
 import EditStory from './pages/komunitas/story/EditStory';
 import StoryDetail from './pages/komunitas/story/StoryDetail';
+import TemanDukungan from './pages/komunitas/group/TemanDukungan';
+import { AuthProvider } from './contexts/AuthContext';
+import PostDetail from './pages/komunitas/group/PostDetail';
+import UserChat from './pages/konsultasi/user/UserChat';
 
 
 // Protected Route Component
@@ -84,40 +88,45 @@ AdminRoute.propTypes = {
 
 function App() {
   return (
-    <Router>
-      <Navbar/>
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/Login" element={<Login />} />
-        <Route path="/Register" element={<Login />} />
-        <Route path="/complete-profile" element={<ComProfile/>} />
-        <Route path="/Konsultasi" element={<Konsultasi/>}/>
-        <Route path="/RuangKonsultasi" element={<RuangKonsultasi/>}/>
-        <Route 
-          path="/admin"
-          element={
-            <AdminRoute>
-              <Admin />
-            </AdminRoute>
-          } 
-        />
-        <Route 
-          path="/adminchat"
-          element={
-            <AdminRoute>
-              <AdminChat />
-            </AdminRoute>
-          } 
-        />
-        <Route path="/aipage" element={<AiPage />} />
-        <Route path="/profile" element={<Profile />} />
-        <Route path="/KomunitasMental" element={<KomunitasMental />} />
-        <Route path="/BagikanCerita" element={<BagikanCerita />} />
-        <Route path="/edit-story/:storyId" element={<EditStory />} />
-        <Route path="/story/:storyId" element={<StoryDetail />} />
-      </Routes>
-      <Footer />
-    </Router>
+    <AuthProvider>
+      <Router>
+        <Navbar/>
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/Login" element={<Login />} />
+          <Route path="/Register" element={<Login />} />
+          <Route path="/complete-profile" element={<ComProfile/>} />
+          <Route path="/Konsultasi" element={<Konsultasi/>}/>
+          <Route path="/ruang-konsultasi-user/:appointmentId" element={<RuangKonsultasiUser />} />
+          <Route 
+            path="/admin"
+            element={
+              <AdminRoute>
+                <Admin />
+              </AdminRoute>
+            } 
+          />
+          <Route 
+            path="/ruang-konsultasi/:appointmentId"
+            element={
+              <AdminRoute>
+                <RuangKonsultasi />
+              </AdminRoute>
+            } 
+          />
+          <Route path="/aipage" element={<AiPage />} />
+          <Route path="/profile" element={<Profile />} />
+          <Route path="/KomunitasMental" element={<KomunitasMental />} />
+          <Route path="/BagikanCerita" element={<BagikanCerita />} />
+          <Route path="/edit-story/:storyId" element={<EditStory />} />
+          <Route path="/story/:storyId" element={<StoryDetail />} />
+          <Route path="/teman-dukungan" element={<TemanDukungan />} />
+          <Route path="/komunitas/post/:postId" element={<PostDetail />} />
+          <Route path="/chat/:consultationId" element={<UserChat />} />
+        </Routes>
+        <Footer />
+      </Router>
+    </AuthProvider>
   );
 }
 

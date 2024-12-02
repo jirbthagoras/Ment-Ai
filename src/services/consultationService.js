@@ -47,7 +47,7 @@ export const getBookedSlots = (selectedDate, selectedDoctor, callback) => {
   });
 };
 
-// Save appointment with the structure from konsultasi.jsx
+// Save appointment without creating a room
 export const saveAppointment = async (bookingData) => {
   try {
     const appointmentsRef = ref(realtimeDb, 'appointments');
@@ -66,6 +66,7 @@ export const saveAppointment = async (bookingData) => {
       totalAmount: bookingData.totalAmount,
       status: 'pending',
       createdAt: new Date().toISOString(),
+      hasRoom: false, // Add this flag to track room status
       metadata: {
         createdBy: bookingData.userId,
         createdAt: new Date().toISOString(),

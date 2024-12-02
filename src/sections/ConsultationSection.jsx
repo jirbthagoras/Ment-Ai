@@ -17,7 +17,7 @@ const ConsultationSection = () => {
   };
 
   return (
-    <section className="bg-gradient-to-b from-[#A0A9FF] to-[#1E498E]">
+    <section className="bg-gradient-to-b from-[#1E498E] to-[#A0A9FF]">
       <div className="container mx-auto px-4 py-20">
         <div className="flex flex-col gap-16">
           {/* Psychiatrist Card */}
@@ -88,7 +88,7 @@ const ConsultationSection = () => {
                 Dr.Men
               </h3>
               <p className="text-white/90 text-lg mb-6 leading-relaxed">
-                Hai perkenalkan sobat ment'ai<br />
+                Hai perkenalkan sobat ment&apos;ai<br />
                 sebuah Artificial Intelligence untuk<br />
                 mengatasi kesehatan mental<br />
                 generasi muda, teman terbaik, dan<br />
