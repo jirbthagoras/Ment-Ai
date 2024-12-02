@@ -16,108 +16,72 @@ import { realtimeDb, auth } from '../firebase';
  */
 export const checkChatRoomExists = async (appointmentId) => {
   try {
-    if (!appointmentId) throw new Error('Appointment ID is required');
+    if (!appointmentId) {
+      throw new Error('Appointment ID is required');
+    }
+
+    const roomRef = ref(realtimeDb, `consultation-rooms/${appointmentId}`);
+    const snapshot = await get(roomRef);
     
-    const chatRoomRef = ref(realtimeDb, `chats/${appointmentId}`);
-    const snapshot = await get(chatRoomRef);
+    if (snapshot.exists()) {
+      const roomData = snapshot.val();
+      return {
+        exists: true,
+        status: roomData.status || 'not-ready',
+        data: roomData
+      };
+    }
     
     return {
-      exists: snapshot.exists(),
-      status: snapshot.exists() ? snapshot.val().status : null
+      exists: false,
+      status: 'not-created',
+      data: null
     };
   } catch (error) {
     console.error('Error checking chat room:', error);
-    return { exists: false, status: null };
+    throw error;
   }
 };
 
 /**
  * Create a new chat room for an appointment
  */
-export const createChatRoom = async (appointmentId) => {
+export const createChatRoom = async (roomData) => {
   try {
-    // Validation
-    if (!appointmentId) throw new Error('Appointment ID is required');
+    // Check if appointment exists and doesn't have a room yet
+    const appointmentRef = ref(realtimeDb, `appointments/${roomData.appointmentId}`);
+    const appointmentSnap = await get(appointmentRef);
     
-    const currentUser = auth.currentUser;
-    if (!currentUser) throw new Error('User must be authenticated');
-
-    // Get appointment details
-    const appointmentRef = ref(realtimeDb, `appointments/${appointmentId}`);
-    const appointmentSnapshot = await get(appointmentRef);
-    
-    if (!appointmentSnapshot.exists()) {
+    if (!appointmentSnap.exists()) {
       throw new Error('Appointment not found');
     }
-
-    const appointment = appointmentSnapshot.val();
-
-    // Check if chat room already exists
-    const { exists } = await checkChatRoomExists(appointmentId);
-    if (exists) {
-      throw new Error('Chat room already exists');
+    
+    const appointment = appointmentSnap.val();
+    if (appointment.hasRoom) {
+      throw new Error('Chat room already exists for this appointment');
     }
 
-    // Prepare chat room data
-    const chatRoomData = {
-      appointmentId,
-      status: 'active',
-      type: 'consultation',
+    // Create the chat room
+    const roomRef = ref(realtimeDb, `consultation-rooms/${roomData.appointmentId}`);
+    await set(roomRef, {
+      ...roomData,
+      messages: [],
       participants: {
-        [appointment.userId]: {
-          role: 'patient',
-          name: appointment.patientName || 'Unknown Patient',
-          joinedAt: serverTimestamp()
+        [roomData.doctorId]: {
+          role: 'doctor',
+          lastSeen: new Date().toISOString()
         },
-        [currentUser.uid]: {
-          role: 'admin',
-          name: currentUser.displayName || 'Admin',
-          joinedAt: serverTimestamp()
+        [roomData.patientId]: {
+          role: 'patient',
+          lastSeen: null
         }
-      },
-      metadata: {
-        createdAt: serverTimestamp(),
-        createdBy: currentUser.uid,
-        lastUpdated: serverTimestamp(),
-        appointmentDate: appointment.date,
-        appointmentTime: Array.isArray(appointment.times) ? appointment.times[0] : appointment.time,
-        doctorName: appointment.doctor || 'Unknown Doctor'
-      },
-      lastMessage: {
-        content: 'Chat room created',
-        timestamp: serverTimestamp(),
-        senderId: currentUser.uid,
-        senderRole: 'admin'
       }
-    };
+    });
 
-    // Create chat room
-    const chatRoomRef = ref(realtimeDb, `chats/${appointmentId}`);
-    await set(chatRoomRef, chatRoomData);
-
-    // Update appointment status
-    const appointmentUpdates = {
-      status: 'in-consultation',
-      chatRoomCreated: true,
-      lastUpdated: serverTimestamp(),
-      metadata: {
-        ...(appointment.metadata || {}),
-        lastUpdatedBy: currentUser.uid,
-        lastUpdatedAt: serverTimestamp()
-      }
-    };
-
-    await update(appointmentRef, appointmentUpdates);
-
-    return {
-      success: true,
-      chatRoomId: appointmentId,
-      message: 'Chat room created successfully'
-    };
-
+    return true;
   } catch (error) {
     console.error('Error creating chat room:', error);
-    throw new Error(`Failed to create chat room: ${error.message}`);
+    throw error;
   }
 };
 
@@ -319,5 +283,22 @@ export const getAppointment = async (appointmentId) => {
   } catch (error) {
     console.error('Error getting appointment:', error);
     throw new Error(`Failed to get appointment: ${error.message}`);
+  }
+};
+
+/**
+ * Join chat room
+ */
+export const joinChatRoom = async (roomId, userId, userRole) => {
+  try {
+    const roomRef = ref(realtimeDb, `consultation-rooms/${roomId}/participants/${userId}`);
+    await set(roomRef, {
+      joinedAt: new Date().toISOString(),
+      role: userRole
+    }, { merge: true });
+    return true;
+  } catch (error) {
+    console.error('Error joining chat room:', error);
+    throw error;
   }
 };

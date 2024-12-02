@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect } from 'react';
 import { auth, db } from '../firebase';
 import { 
   createUserWithEmailAndPassword,
@@ -9,6 +9,7 @@ import {
   sendPasswordResetEmail
 } from 'firebase/auth';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
+import PropTypes from 'prop-types';
 
 // Create the context
 const AuthContext = createContext({
@@ -37,29 +38,25 @@ export const AuthProvider = ({ children }) => {
 
   // Sign Up
   async function signup(email, password, displayName) {
-    try {
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      
-      // Update profile with display name
-      await updateProfile(userCredential.user, {
-        displayName: displayName,
-        photoURL: `https://ui-avatars.com/api/?name=${displayName}&background=random`
-      });
+    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+    
+    // Update profile with display name
+    await updateProfile(userCredential.user, {
+      displayName: displayName,
+      photoURL: `https://ui-avatars.com/api/?name=${displayName}&background=random`
+    });
 
-      // Create user document in Firestore
-      await setDoc(doc(db, 'users', userCredential.user.uid), {
-        email,
-        displayName,
-        createdAt: new Date().toISOString(),
-        posts: [],
-        savedPosts: [],
-        isAdmin: false
-      });
+    // Create user document in Firestore
+    await setDoc(doc(db, 'users', userCredential.user.uid), {
+      email,
+      displayName,
+      createdAt: new Date().toISOString(),
+      posts: [],
+      savedPosts: [],
+      isAdmin: false
+    });
 
-      return userCredential.user;
-    } catch (error) {
-      throw error;
-    }
+    return userCredential.user;
   }
 
   // Login
@@ -79,20 +76,16 @@ export const AuthProvider = ({ children }) => {
 
   // Update User Profile
   async function updateUserProfile(updates) {
-    try {
-      const user = auth.currentUser;
-      if (!user) throw new Error('No user logged in');
+    const user = auth.currentUser;
+    if (!user) throw new Error('No user logged in');
 
-      await updateProfile(user, updates);
-      
-      // Update Firestore user document
-      const userRef = doc(db, 'users', user.uid);
-      await setDoc(userRef, updates, { merge: true });
+    await updateProfile(user, updates);
+    
+    // Update Firestore user document
+    const userRef = doc(db, 'users', user.uid);
+    await setDoc(userRef, updates, { merge: true });
 
-      return user;
-    } catch (error) {
-      throw error;
-    }
+    return user;
   }
 
   // Get User Data from Firestore
@@ -138,4 +131,8 @@ export const AuthProvider = ({ children }) => {
       {!loading && children}
     </AuthContext.Provider>
   );
+};
+
+AuthProvider.propTypes = {
+  children: PropTypes.node.isRequired
 }; 

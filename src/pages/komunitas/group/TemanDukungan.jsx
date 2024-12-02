@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import CreatePostModal from './CreatePostModal';
 import { getPosts, toggleLike, toggleSave, deletePost, createPost } from '../../../services/postService';
@@ -34,8 +34,6 @@ const TemanDukungan = () => {
   const [sortBy, setSortBy] = useState('newest');
   const [searchQuery, setSearchQuery] = useState('');
   const [posts, setPosts] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(null);
 
   const [postComments, setPostComments] = useState({});
 
@@ -50,8 +48,8 @@ const TemanDukungan = () => {
 
   const navigate = useNavigate();
 
-  // Fetch user profile data
-  const fetchUserProfile = async () => {
+  // Wrap fetchUserProfile in useCallback
+  const fetchUserProfile = useCallback(async () => {
     if (!user?.uid) return;
     try {
       const userDoc = await getDoc(doc(db, 'users', user.uid));
@@ -61,13 +59,14 @@ const TemanDukungan = () => {
     } catch (error) {
       console.error('Error fetching user profile:', error);
     }
-  };
+  }, [user?.uid]);
 
+  // Update useEffect with fetchUserProfile dependency
   useEffect(() => {
     if (user?.uid) {
       fetchUserProfile();
     }
-  }, [user]);
+  }, [user?.uid, fetchUserProfile]);
 
   const handleCreatePost = async (postData) => {
     if (!user?.uid) {
@@ -123,9 +122,9 @@ const TemanDukungan = () => {
     }
   };
 
+  // Update fetchPosts to not use removed states
   const fetchPosts = async (category = 'all', sortBy = 'newest') => {
     try {
-      setIsLoading(true);
       const fetchedPosts = await getPosts(category, sortBy);
       setPosts(fetchedPosts.map(post => ({
         ...post,
@@ -134,10 +133,7 @@ const TemanDukungan = () => {
         comments: post.commentsCount || 0
       })));
     } catch (error) {
-      setError('Failed to fetch posts');
       console.error('Error fetching posts:', error);
-    } finally {
-      setIsLoading(false);
     }
   };
 

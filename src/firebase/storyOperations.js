@@ -99,10 +99,10 @@ export const deleteStory = async (storyId) => {
 export const getStories = async (filter = 'all') => {
   try {
     let q = storiesCollection;
+    const user = auth.currentUser;
 
     switch (filter) {
       case 'my':
-        const user = auth.currentUser;
         if (!user) throw new Error('User must be logged in to view their stories');
         q = query(storiesCollection, where('authorId', '==', user.uid));
         break;

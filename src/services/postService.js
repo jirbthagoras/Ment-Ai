@@ -10,15 +10,11 @@ import {
   doc,
   increment,
   deleteDoc,
-  Timestamp,
   getDoc,
   writeBatch,
-  setDoc
 } from 'firebase/firestore';
 import { db } from '../firebase';
 import { formatDistanceToNow } from 'date-fns';
-
-const postsCollection = collection(db, 'posts');
 
 // Create a new post
 export const createPost = async (postData, userId) => {

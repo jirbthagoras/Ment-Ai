@@ -2,7 +2,7 @@ import Komunitas1 from '../assets/komunitas-1.png'
 import Komunitas2 from '../assets/komunitas2.png'
 const CommunitySection = () => {
   return (
-<section className="min-h-screen bg-gradient-to-b from-[#1E498E] to-[#A0A9FF] pt-32" id='Komunitas'>
+<section className="min-h-screen bg-gradient-to-b from-[#A0A9FF] to-[#1E498E] pt-32" id='Komunitas'>
   <h1 className="text-5xl font-bold text-white mb-12 text-center">Komunitas</h1>
   <div className="flex flex-col justify-center sm:flex-row gap-36 h-auto items-center">
     {/* Card Teman Dukungan */}
@@ -38,7 +38,7 @@ const CommunitySection = () => {
           />
 
           <p className="text-gray-600 mb-6">
-            Pengguna dapat merekam "cerita" mereka dari awal hingga akhir perjalanan mental mereka, yang bersifat pribadi atau bisa di-share secara anonim untuk inspirasi orang lain.
+            Pengguna dapat merekam &quot;cerita&quot; mereka dari awal hingga akhir perjalanan mental mereka, yang bersifat pribadi atau bisa di-share secara anonim untuk inspirasi orang lain.
           </p>
         </div>
       </div>

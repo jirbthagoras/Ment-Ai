@@ -9,7 +9,7 @@ import {
   sendMessage, 
   getUserOnlineStatus,
   createChatRoom
-} from '../services/chatService';
+} from '../../services/chatService';
 
 export default function AdminChat() {
   const location = useLocation();
