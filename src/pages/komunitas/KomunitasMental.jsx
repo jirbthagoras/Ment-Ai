@@ -84,7 +84,7 @@ const KomunitasMental = () => {
               Bagikan Cerita
             </h2>
             <p className="text-white/80 text-base md:text-lg leading-relaxed mb-8 min-h-[96px]">
-              Pengguna dapat merekam "cerita" mereka dari awal hingga akhir perjalanan mental mereka, 
+              Pengguna dapat merekam &quot;cerita&quot; mereka dari awal hingga akhir perjalanan mental mereka, 
               yang bersifat pribadi atau bisa di-share secara anonim untuk inspirasi orang lain.
             </p>
             

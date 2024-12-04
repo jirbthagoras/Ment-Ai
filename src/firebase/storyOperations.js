@@ -159,7 +159,7 @@ export const toggleLike = async (storyId) => {
 
     await updateDoc(storyRef, {
       likedBy: isLiked ? arrayRemove(user.uid) : arrayUnion(user.uid),
-      likes: increment(isLiked ? 1 : -1)
+      likes: increment(isLiked ? 1 : 1)
     });
 
     return !isLiked;
@@ -171,24 +171,23 @@ export const toggleLike = async (storyId) => {
 
 export const addComment = async (storyId, commentData) => {
   try {
-    const user = auth.currentUser;
-    if (!user) throw new Error('Must be logged in to comment');
-
     const storyRef = doc(db, 'stories', storyId);
-    const newComment = {
-      id: crypto.randomUUID(), // Generate unique ID for the comment
-      text: commentData.text,
-      authorId: user.uid,
-      authorName: commentData.isAnonymous ? 'Anonymous' : (user.displayName || 'Unknown User'),
-      isAnonymous: commentData.isAnonymous,
-      createdAt: new Date().toISOString() // Use ISO string instead of serverTimestamp
-    };
+    const storyDoc = await getDoc(storyRef);
+    
+    if (!storyDoc.exists()) {
+      throw new Error('Story not found');
+    }
 
-    await updateDoc(storyRef, {
-      comments: arrayUnion(newComment)
+    const story = storyDoc.data();
+    const comments = story.comments || [];
+    comments.push(commentData);
+
+    await updateDoc(storyRef, { 
+      comments,
+      updatedAt: serverTimestamp()
     });
-
-    return newComment;
+    
+    return commentData;
   } catch (error) {
     console.error('Error adding comment:', error);
     throw error;

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { auth } from '../../../firebase';
+import { signOut } from 'firebase/auth';
 import { format } from 'date-fns';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ref, set, push } from 'firebase/database';
@@ -8,7 +9,87 @@ import PropTypes from 'prop-types';
 import { fetchUserProfile, updateUserProfile, setupConsultationListener } from '../../../services/profileService';
 import { useNavigate } from 'react-router-dom';
 import { FaCheckCircle, FaClock, FaCalendarAlt, FaPlay, FaStethoscope, FaClinicMedical, FaChevronUp, FaChevronDown, FaHourglassHalf, FaUserMd } from 'react-icons/fa';
+import { FiUser, FiMail, FiPhone, FiMapPin, FiCalendar, FiLock } from 'react-icons/fi';
 import { id } from 'date-fns/locale';
+
+// Add InfoField component definition
+const InfoField = ({ 
+  icon, 
+  label, 
+  value, 
+  isEditing, 
+  isProtected, 
+  handleInputChange, 
+  name,
+  isPublic 
+}) => (
+  <div className="relative">
+    <label className="block text-sm font-medium text-gray-700">{label}</label>
+    <div className="mt-1 flex items-center">
+      <span className="text-gray-400 mr-2">
+        {icon}
+      </span>
+      {isEditing && !isPublic ? (
+        <input
+          type="text"
+          name={name}
+          value={value || ''}
+          onChange={handleInputChange}
+          className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+        />
+      ) : (
+        <div className="flex items-center gap-2">
+          <span className="text-gray-900">
+            {isProtected && !isEditing ? (
+              <>
+                {value ? (
+                  name === 'phone' 
+                    ? `${value.slice(0, 4)}****${value.slice(-3)}`
+                    : '********'
+                ) : '-'}
+                <span className="ml-2 text-xs text-gray-500 italic">
+                  (Tersembunyi)
+                </span>
+              </>
+            ) : (
+              value || '-'
+            )}
+          </span>
+        </div>
+      )}
+      {isProtected && !isEditing && (
+        <span className="absolute right-0 top-0 text-gray-400">
+          <FiLock className="w-4 h-4" />
+        </span>
+      )}
+    </div>
+  </div>
+);
+
+// Add PropTypes for InfoField
+InfoField.propTypes = {
+  icon: PropTypes.element.isRequired,
+  label: PropTypes.string.isRequired,
+  value: PropTypes.oneOfType([
+    PropTypes.string,
+    PropTypes.number
+  ]),
+  isEditing: PropTypes.bool,
+  isProtected: PropTypes.bool,
+  handleInputChange: PropTypes.func,
+  name: PropTypes.string,
+  isPublic: PropTypes.bool
+};
+
+// Add default props
+InfoField.defaultProps = {
+  value: '',
+  isEditing: false,
+  isProtected: false,
+  handleInputChange: () => {},
+  name: '',
+  isPublic: false
+};
 
 // Add this helper function at the top of the file
 const isPastConsultation = (consultationDate) => {
@@ -117,8 +198,12 @@ const BookingCard = ({ consultation }) => {
   };
 
   const getTimeRemaining = (consultationDate, consultationTime) => {
+    if (!consultationDate || !consultationTime) return 'Invalid time';
+    
     const now = new Date();
     const [hours, minutes] = consultationTime.split(':');
+    if (!hours || !minutes) return 'Invalid time format';
+
     const consultation = new Date(consultationDate);
     consultation.setHours(parseInt(hours), parseInt(minutes), 0);
     
@@ -321,7 +406,8 @@ BookingCard.propTypes = {
     doctorNotes: PropTypes.string,
     recommendations: PropTypes.string,
     createdAt: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-    updatedAt: PropTypes.oneOfType([PropTypes.string, PropTypes.number])
+    updatedAt: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    setHours: PropTypes.func
   }).isRequired
 };
 
@@ -424,6 +510,200 @@ ConsultationStatus.propTypes = {
   timeStatus: PropTypes.string.isRequired
 };
 
+// Update MedicalInfoSection to use the props
+const MedicalInfoSection = ({ user, isEditing, handleInputChange }) => (
+  <div className="space-y-8 p-8 bg-gray-50 rounded-lg">
+    <h2 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
+      <FaStethoscope className="text-blue-500" />
+      Informasi Medis
+    </h2>
+    
+    <div className="grid grid-cols-1 gap-6">
+      <InfoField
+        icon={<FaStethoscope />}
+        label="Riwayat Konsultasi"
+        value={user.medicalInfo?.riwayatKonsultasi}
+        isEditing={isEditing}
+        handleInputChange={handleInputChange}
+        name="medicalInfo.riwayatKonsultasi"
+      />
+
+      <InfoField
+        icon={<FaUserMd />}
+        label="Keluhan Utama"
+        value={user.medicalInfo?.keluhanUtama}
+        isEditing={isEditing}
+        handleInputChange={handleInputChange}
+        name="medicalInfo.keluhanUtama"
+      />
+
+      <InfoField
+        icon={<FaStethoscope />}
+        label="Riwayat Pengobatan"
+        value={user.medicalInfo?.riwayatPengobatan}
+        isEditing={isEditing}
+        handleInputChange={handleInputChange}
+        name="medicalInfo.riwayatPengobatan"
+      />
+
+      <InfoField
+        icon={<FaUserMd />}
+        label="Kondisi Mental"
+        value={user.medicalInfo?.kondisiMental}
+        isEditing={isEditing}
+        handleInputChange={handleInputChange}
+        name="medicalInfo.kondisiMental"
+      />
+
+      <InfoField
+        icon={<FaUserMd />}
+        label="Tingkat Stress"
+        value={user.medicalInfo?.tingkatStress}
+        isEditing={isEditing}
+        handleInputChange={handleInputChange}
+        name="medicalInfo.tingkatStress"
+      />
+
+      <InfoField
+        icon={<FaUserMd />}
+        label="Kualitas Tidur"
+        value={user.medicalInfo?.kualitasTidur}
+        isEditing={isEditing}
+        handleInputChange={handleInputChange}
+        name="medicalInfo.kualitasTidur"
+      />
+
+      <InfoField
+        icon={<FaUserMd />}
+        label="Dukungan Keluarga"
+        value={user.medicalInfo?.dukunganKeluarga}
+        isEditing={isEditing}
+        handleInputChange={handleInputChange}
+        name="medicalInfo.dukunganKeluarga"
+      />
+    </div>
+  </div>
+);
+
+// Update PersonalInfoSection to use the props
+const PersonalInfoSection = ({ user, isEditing, handleInputChange }) => (
+  <div className="space-y-8 p-8">
+    <h2 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
+      <FiUser className="text-blue-500" />
+      Informasi Pribadi
+    </h2>
+    
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="space-y-4">
+        <InfoField
+          icon={<FiUser />}
+          label="Nama Lengkap"
+          value={user.username}
+          isEditing={isEditing}
+          handleInputChange={handleInputChange}
+          name="username"
+          isPublic={true}
+        />
+        <InfoField
+          icon={<FiMail />}
+          label="Email"
+          value={user.email}
+          isEditing={isEditing}
+          handleInputChange={handleInputChange}
+          name="email"
+          isPublic={true}
+        />
+        <InfoField
+          icon={<FiPhone />}
+          label="Nomor Telepon"
+          value={user.phone}
+          isEditing={isEditing}
+          isProtected={true}
+          handleInputChange={handleInputChange}
+          name="phone"
+        />
+      </div>
+
+      <div className="space-y-4">
+        <InfoField
+          icon={<FiMapPin />}
+          label="Alamat"
+          value={user.address}
+          isEditing={isEditing}
+          isProtected={true}
+          handleInputChange={handleInputChange}
+          name="address"
+        />
+        <InfoField
+          icon={<FiCalendar />}
+          label="Tanggal Lahir"
+          value={user.birthDate}
+          isEditing={isEditing}
+          handleInputChange={handleInputChange}
+          name="birthDate"
+          isPublic={true}
+        />
+        <InfoField
+          icon={<FiUser />}
+          label="Umur"
+          value={user.age ? `${user.age} tahun` : '-'}
+          isPublic={true}
+        />
+      </div>
+    </div>
+  </div>
+);
+
+// Update PropTypes
+MedicalInfoSection.propTypes = {
+  user: PropTypes.shape({
+    medicalInfo: PropTypes.shape({
+      riwayatKonsultasi: PropTypes.string,
+      keluhanUtama: PropTypes.string,
+      riwayatPengobatan: PropTypes.string,
+      kondisiMental: PropTypes.string,
+      tingkatStress: PropTypes.string,
+      kualitasTidur: PropTypes.string,
+      dukunganKeluarga: PropTypes.string
+    })
+  }).isRequired,
+  isEditing: PropTypes.bool.isRequired,
+  handleInputChange: PropTypes.func.isRequired
+};
+
+PersonalInfoSection.propTypes = {
+  user: PropTypes.shape({
+    username: PropTypes.string,
+    email: PropTypes.string,
+    phone: PropTypes.string,
+    address: PropTypes.string,
+    birthDate: PropTypes.string,
+    age: PropTypes.number
+  }).isRequired,
+  isEditing: PropTypes.bool.isRequired,
+  handleInputChange: PropTypes.func.isRequired
+};
+
+// Optional: Add default props
+PersonalInfoSection.defaultProps = {
+  user: {
+    username: '',
+    birthDate: '',
+    gender: '',
+    occupation: '',
+    maritalStatus: ''
+  }
+};
+
+MedicalInfoSection.defaultProps = {
+  user: {
+    medicalHistory: '',
+    currentMedications: '',
+    mainConcerns: '',
+    additionalNotes: ''
+  }
+};
+
 export default function Profile() {
   const [user, setUser] = useState({
     username: '',
@@ -438,6 +718,7 @@ export default function Profile() {
     currentMedications: '',
     previousTherapy: '',
     mainConcerns: '',
+    profileImageUrl: '',
   });
   
   const [consultationHistory, setConsultationHistory] = useState([]);
@@ -756,6 +1037,15 @@ export default function Profile() {
     return () => clearTimeout(loadingTimeout);
   }, [isLoading]);
 
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      window.location.href = '/login'; // Redirect to login page after logout
+    } catch (error) {
+      console.error('Error logging out:', error);
+    }
+  };
+
   if (!isAuthChecked) {
     return (
       <div className="flex justify-center items-center min-h-screen">
@@ -844,20 +1134,40 @@ export default function Profile() {
               variants={itemVariants}
               className="bg-gradient-to-r from-[#8e94f2] to-[#1e4287] px-8 py-6"
             >
-              <div className="flex items-center space-x-4">
-                <motion.div 
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  className="h-20 w-20 rounded-full bg-white flex items-center justify-center shadow-lg"
-                >
-                  <span className="text-3xl text-blue-600">
-                    {user.username?.charAt(0) || user.displayName?.charAt(0) || '?'}
-                  </span>
-                </motion.div>
-                <div className="text-white">
-                  <h1 className="text-2xl font-bold">{user.username || user.displayName}</h1>
-                  <p className="text-blue-100">{user.email}</p>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-4">
+                  <motion.div 
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    className="h-20 w-20 rounded-full bg-white flex items-center justify-center shadow-lg overflow-hidden"
+                  >
+                    {user.profileImage ? (
+                      <img
+                        src={user.profileImage}
+                        alt={user.username || user.displayName}
+                        className="h-full w-full object-cover"
+                        onError={(e) => {
+                          e.target.onerror = null;
+                          e.target.src = 'https://via.placeholder.com/150';
+                        }}
+                      />
+                    ) : (
+                      <span className="text-3xl text-blue-600">
+                        {user.username?.charAt(0) || user.displayName?.charAt(0) || '?'}
+                      </span>
+                    )}
+                  </motion.div>
+                  <div className="text-white">
+                    <h1 className="text-2xl font-bold">{user.username || user.displayName}</h1>
+                    <p className="text-blue-100">{user.email}</p>
+                  </div>
                 </div>
+                <button
+                  onClick={handleLogout}
+                  className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                >
+                  Logout
+                </button>
               </div>
             </motion.div>
 
@@ -904,120 +1214,9 @@ export default function Profile() {
                   animate={{ opacity: 1 }}
                   transition={{ duration: 0.4 }}
                 >
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {/* Personal Information Section */}
-                    <div className="space-y-6">
-                      <h2 className="text-xl font-semibold text-gray-900">Personal Information</h2>
-                      
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700">Full Name</label>
-                        <input
-                          type="text"
-                          name="displayName"
-                          value={user.displayName}
-                          onChange={handleInputChange}
-                          disabled={!isEditing}
-                          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700">Date of Birth</label>
-                        <input
-                          type="date"
-                          name="dateOfBirth"
-                          value={user.dateOfBirth}
-                          onChange={handleInputChange}
-                          disabled={!isEditing}
-                          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700">Gender</label>
-                        <select
-                          name="gender"
-                          value={user.gender}
-                          onChange={handleInputChange}
-                          disabled={!isEditing}
-                          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                        >
-                          <option value="">Select gender</option>
-                          <option value="male">Male</option>
-                          <option value="female">Female</option>
-                          <option value="other">Other</option>
-                        </select>
-                      </div>
-
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700">Occupation</label>
-                        <input
-                          type="text"
-                          name="occupation"
-                          value={user.occupation}
-                          onChange={handleInputChange}
-                          disabled={!isEditing}
-                          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                        />
-                      </div>
-                    </div>
-
-                    {/* Medical Information Section */}
-                    <div className="space-y-6">
-                      <h2 className="text-xl font-semibold text-gray-900">Informasi Medis</h2>
-                      
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700">Riwayat Medis</label>
-                        <textarea
-                          name="medicalHistory"
-                          value={user.medicalHistory}
-                          onChange={handleInputChange}
-                          disabled={!isEditing}
-                          rows="3"
-                          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                          placeholder="Kondisi medis apa pun yang relevan..."
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700">Pengobatan Saat Ini</label>
-                        <textarea
-                          name="currentMedications"
-                          value={user.currentMedications}
-                          onChange={handleInputChange}
-                          disabled={!isEditing}
-                          rows="2"
-                          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                          placeholder="Daftar obat apa pun saat ini..."
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700">Pengalaman Terapi Sebelumnya</label>
-                        <textarea
-                          name="previousTherapy"
-                          value={user.previousTherapy}
-                          onChange={handleInputChange}
-                          disabled={!isEditing}
-                          rows="2"
-                          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                          placeholder="Pengalaman terapi sebelumnya..."
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700">Kekhawatiran Utama</label>
-                        <textarea
-                          name="mainConcerns"
-                          value={user.mainConcerns}
-                          onChange={handleInputChange}
-                          disabled={!isEditing}
-                          rows="3"
-                          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                          placeholder="Apa yang membawa Anda ke terapi..."
-                        />
-                      </div>
-                    </div>
+                  <div className="space-y-6">
+                    <PersonalInfoSection user={user} isEditing={isEditing} handleInputChange={handleInputChange} />
+                    <MedicalInfoSection user={user} isEditing={isEditing} handleInputChange={handleInputChange} />
                   </div>
 
                   {/* Action Buttons */}

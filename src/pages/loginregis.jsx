@@ -4,9 +4,8 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { FaGoogle, FaEyeSlash, FaEye } from 'react-icons/fa';
 import { motion } from 'framer-motion';
-import { auth, realtimeDb, db } from '../firebase';
-import { signInWithEmailAndPassword, createUserWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, onAuthStateChanged } from 'firebase/auth';
-import { ref, set, get } from 'firebase/database';
+import { auth, db } from '../firebase';
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword, GoogleAuthProvider, onAuthStateChanged, signInWithRedirect, getRedirectResult } from 'firebase/auth';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
 
 import logow from '../assets/LogoW.png';
@@ -37,149 +36,174 @@ export default function Component() {
 
   const handleGoogleLogin = async () => {
     try {
-      const result = await signInWithPopup(auth, provider)
-      const user = result.user
+      // Configure Google provider
+      provider.setCustomParameters({
+        prompt: 'select_account'
+      });
       
-      // Check if this is a new user
-      const userDocRef = doc(db, 'users', user.uid)
-      const userDocSnap = await getDoc(userDocRef)
-      
-      if (!userDocSnap.exists()) {
-        // New Google user - save initial data
-        await saveUserData(user.uid, {
-          email: user.email,
-          displayName: user.displayName,
-          photoURL: user.photoURL
-        })
-      } else {
-        // Existing user - update last login
-        await setDoc(userDocRef, {
-          lastLogin: new Date()
-        }, { merge: true })
-      }
-      
-      await checkUserRole(user.uid)
+      await signInWithRedirect(auth, provider);
     } catch (err) {
-      if (err.code === 'auth/popup-closed-by-user') {
-        setError('Login dibatalkan. Silakan coba lagi.')
-      } else {
-        console.error('Google login error:', err)
-        setError('Terjadi kesalahan saat login dengan Google.')
-      }
+      console.error('Google login error:', err);
+      setError('Terjadi kesalahan saat login dengan Google.');
     }
-  }
+  };
+
+  useEffect(() => {
+    const handleRedirectResult = async () => {
+      try {
+        const result = await getRedirectResult(auth);
+        if (result?.user) {
+          const saved = await saveUserData(result.user.uid, {
+            email: result.user.email,
+            displayName: result.user.displayName,
+            photoURL: result.user.photoURL
+          });
+          
+          if (saved) {
+            await checkUserRole(result.user.uid);
+          } else {
+            setError('Gagal menyimpan data pengguna.');
+          }
+        }
+      } catch (error) {
+        console.error('Redirect result error:', error);
+        setError('Gagal login dengan Google.');
+      }
+    };
+
+    handleRedirectResult();
+  }, []);
 
   const saveUserData = async (uid, userData) => {
     try {
-      // Save to Firestore - user profile data
-      const userDocRef = doc(db, 'users', uid)
-      await setDoc(userDocRef, {
-        email: userData.email,
-        createdAt: new Date(),
-        profileCompleted: false,
-        lastLogin: new Date()
-      }, { merge: true })
-
-      // Save to Realtime Database - user status/role
-      const userRef = ref(realtimeDb, `users/${uid}`)
-      await set(userRef, {
-        email: userData.email,
-        isAdmin: false,
-        createdAt: Date.now(),
-        status: 'active'
-      })
+      const userDocRef = doc(db, 'users', uid);
+      
+      // First check if user exists
+      const userDoc = await getDoc(userDocRef);
+      
+      if (!userDoc.exists()) {
+        // New user
+        await setDoc(userDocRef, {
+          email: userData.email,
+          displayName: userData.displayName || '',
+          photoURL: userData.photoURL || '',
+          role: 'user',
+          isAdmin: false,
+          createdAt: new Date(),
+          profileCompleted: false,
+          lastLogin: new Date(),
+          status: 'active'
+        });
+      } else {
+        // Update existing user's last login
+        await setDoc(userDocRef, {
+          lastLogin: new Date()
+        }, { merge: true });
+      }
+      return true;
     } catch (error) {
-      console.error('Error saving user data:', error)
-      throw error
+      console.error('Error saving user data:', error);
+      return false;
     }
   }
 
   const checkUserRole = async (uid) => {
     try {
-      // Check Firestore first for user profile
       const userDocRef = doc(db, 'users', uid)
       const userDocSnap = await getDoc(userDocRef)
       
-      // Check Realtime Database for role/status
-      const userRef = ref(realtimeDb, `users/${uid}`)
-      const realtimeSnap = await get(userRef)
-      
-      if (userDocSnap.exists() && realtimeSnap.exists()) {
-        // User exists in both databases
-        const firestoreData = userDocSnap.data()
-        const realtimeData = realtimeSnap.val()
-        
-        if (realtimeData.isAdmin) {
-          navigate('/admin')
-        } else if (firestoreData.profileCompleted) {
-          navigate('/profile')
-        } else {
-          navigate('/complete-profile')
-        }
-      } else if (!userDocSnap.exists()) {
-        // New user - needs to complete profile
+      if (!userDocSnap.exists()) {
         navigate('/complete-profile')
+        return
+      }
+
+      const userData = userDocSnap.data()
+      
+      if (userData.isAdmin) {
+        navigate('/admin')
       } else {
-        throw new Error('User data inconsistency detected')
+        navigate('/home')
       }
     } catch (error) {
       console.error('Error checking user role:', error)
       setError('Error verifying user status. Please try again.')
-      throw error
     }
   }
 
   const handleSubmit = async (e) => {
-    e.preventDefault()
-    setError('')
+    e.preventDefault();
+    setError('');
 
     if (!email || !password) {
-      setError("Mohon isi semua field.")
-      return
+      setError("Mohon isi semua field.");
+      return;
     }
+
     if (!isLogin && password !== confirmPassword) {
-      setError("Password tidak cocok.")
-      return
+      setError("Password tidak cocok.");
+      return;
+    }
+
+    if (!isLogin && password.length < 6) {
+      setError("Password minimal 6 karakter.");
+      return;
     }
 
     try {
       if (isLogin) {
-        const userCredential = await signInWithEmailAndPassword(auth, email, password)
-        // Update last login in Firestore
-        const userDocRef = doc(db, 'users', userCredential.user.uid)
-        await setDoc(userDocRef, {
-          lastLogin: new Date()
-        }, { merge: true })
+        // Login
+        const userCredential = await signInWithEmailAndPassword(auth, email, password);
+        const saved = await saveUserData(userCredential.user.uid, {
+          email: userCredential.user.email,
+          displayName: userCredential.user.displayName,
+          photoURL: userCredential.user.photoURL
+        });
         
-        await checkUserRole(userCredential.user.uid)
+        if (saved) {
+          await checkUserRole(userCredential.user.uid);
+        } else {
+          setError('Gagal menyimpan data pengguna.');
+        }
       } else {
-        const userCredential = await createUserWithEmailAndPassword(auth, email, password)
-        await saveUserData(userCredential.user.uid, {
-          email: email
-        })
-        navigate('/complete-profile')
+        // Register
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        const saved = await saveUserData(userCredential.user.uid, {
+          email: email,
+          displayName: '',
+          photoURL: ''
+        });
+        
+        if (saved) {
+          navigate('/complete-profile');
+        } else {
+          setError('Gagal menyimpan data pengguna.');
+        }
       }
     } catch (err) {
-      console.error('Auth error:', err)
+      console.error('Auth error:', err);
       switch (err.code) {
         case 'auth/email-already-in-use':
-          setError('Email sudah terdaftar.')
-          break
+          setError('Email sudah terdaftar. Silakan login.');
+          setIsLogin(true);
+          break;
         case 'auth/invalid-email':
-          setError('Format email tidak valid.')
-          break
+          setError('Format email tidak valid.');
+          break;
         case 'auth/weak-password':
-          setError('Password terlalu lemah. Minimal 6 karakter.')
-          break
+          setError('Password terlalu lemah. Minimal 6 karakter.');
+          break;
         case 'auth/user-not-found':
         case 'auth/wrong-password':
-          setError('Email atau password salah.')
-          break
+          setError('Email atau password salah.');
+          break;
+        case 'auth/too-many-requests':
+          setError('Terlalu banyak percobaan. Silakan coba lagi nanti.');
+          break;
         default:
-          setError('Terjadi kesalahan. Silakan coba lagi.')
+          setError('Terjadi kesalahan. Silakan coba lagi.');
       }
     }
-  }
+  };
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-[#8e94f2] to-[#1e4287] px-4 py-8">

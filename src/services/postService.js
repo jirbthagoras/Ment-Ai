@@ -21,38 +21,34 @@ export const createPost = async (postData, userId) => {
   try {
     const postsRef = collection(db, 'posts');
     
-    // Add security rules
+    // Create the exact structure required by Firestore rules
     const securePostData = {
-      ...postData,
+      title: postData.title,
+      content: postData.content,
       authorId: userId,
-      createdAt: serverTimestamp(),
-      isPublic: true,
-      anonymous: postData.anonymous || false,
       authorName: postData.anonymous ? 'Anonymous' : postData.authorName,
-      authorAvatar: postData.anonymous ? null : postData.authorAvatar,
-      // Add default values
-      likeCount: 0,
+      authorAvatar: postData.anonymous ? '/anonymous-avatar.png' : postData.authorAvatar,
+      category: postData.category,
+      mood: postData.mood,
+      createdAt: serverTimestamp(),
       commentsCount: 0,
+      likeCount: 0,
       savedBy: [],
-      // Ensure these fields exist
-      title: postData.title || '',
-      content: postData.content || '',
-      category: postData.category || 'general',
-      mood: postData.mood || 'neutral'
+      anonymous: postData.anonymous,
+      isPublic: true
     };
 
     const docRef = await addDoc(postsRef, securePostData);
     
-    // Return the created post with its ID
     return {
       id: docRef.id,
       ...securePostData,
-      createdAt: new Date(), // Convert serverTimestamp to Date for immediate use
+      createdAt: new Date(),
       timeAgo: 'just now'
     };
   } catch (error) {
     console.error('Error in createPost:', error);
-    throw new Error('Failed to create post. Please try again.');
+    throw new Error('Failed to create post: ' + error.message);
   }
 };
 
@@ -216,42 +212,78 @@ export const getComments = async (postId) => {
     const q = query(commentsRef, orderBy('createdAt', 'desc'));
     const snapshot = await getDocs(q);
     
-    return snapshot.docs.map(doc => {
+    // Get all comments with their author data
+    const commentsWithAuthor = await Promise.all(snapshot.docs.map(async doc => {
       const data = doc.data();
-      return {
-        id: doc.id,
-        ...data,
-        createdAt: data.createdAt?.toDate() || new Date()
-      };
-    });
+      
+      // If the comment is anonymous, return as is
+      if (data.anonymous) {
+        return {
+          id: doc.id,
+          ...data,
+          createdAt: data.createdAt?.toDate() || new Date(),
+          authorName: 'Anonymous',
+          authorAvatar: '/anonymous-avatar.png'
+        };
+      }
+
+      // Get author data for non-anonymous comments
+      try {
+        const userDoc = await getDoc(doc(db, 'users', data.authorId));
+        const userData = userDoc.exists() ? userDoc.data() : null;
+        
+        return {
+          id: doc.id,
+          ...data,
+          createdAt: data.createdAt?.toDate() || new Date(),
+          authorName: userData?.displayName || data.authorName || 'User',
+          authorAvatar: userData?.photoURL || data.authorAvatar || '/anonymous-avatar.png'
+        };
+      } catch (error) {
+        console.error('Error fetching comment author:', error);
+        return {
+          id: doc.id,
+          ...data,
+          createdAt: data.createdAt?.toDate() || new Date(),
+          authorName: data.authorName || 'User',
+          authorAvatar: data.authorAvatar || '/anonymous-avatar.png'
+        };
+      }
+    }));
+
+    return commentsWithAuthor;
   } catch (error) {
     console.error('Error fetching comments:', error);
     throw error;
   }
 };
 
-export const addComment = async (postId, comment) => {
+export const addComment = async (postId, commentData) => {
   try {
     const commentsRef = collection(db, 'posts', postId, 'comments');
-    const docRef = await addDoc(commentsRef, {
-      ...comment,
-      authorAvatar: comment.authorAvatar || '/anonymous-avatar.png',
+    const commentRef = await addDoc(commentsRef, {
+      ...commentData,
       createdAt: serverTimestamp()
     });
 
-    // Update post comments count
+    // Update post's comment count
     const postRef = doc(db, 'posts', postId);
     await updateDoc(postRef, {
       commentsCount: increment(1)
     });
 
     return {
-      id: docRef.id,
-      ...comment,
-      createdAt: new Date() // Use current date for immediate display
+      id: commentRef.id,
+      ...commentData
     };
   } catch (error) {
     console.error('Error adding comment:', error);
     throw error;
   }
+};
+
+export const getValidImageUrl = (url, isAnonymous) => {
+  if (isAnonymous) return null; // Return null for anonymous posts
+  if (!url) return null;
+  return url.startsWith('http') ? url : null;
 }; 

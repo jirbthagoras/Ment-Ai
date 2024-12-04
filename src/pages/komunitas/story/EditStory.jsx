@@ -1,7 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getStoryById, updateStory } from '../../../firebase/storyOperations';
 import { toast } from 'react-toastify';
+import { auth, db } from '../../../firebase';
+import { getDoc, doc } from 'firebase/firestore';
 
 const EditStory = () => {
   const { storyId } = useParams();
@@ -10,22 +12,24 @@ const EditStory = () => {
   const [content, setContent] = useState('');
   const [isAnonymous, setIsAnonymous] = useState(false);
   const [loading, setLoading] = useState(false);
+  const user = auth.currentUser;
 
-  useEffect(() => {
-    fetchStory();
-  }, [storyId]);
-
-  const fetchStory = async () => {
+  const fetchStory = useCallback(async () => {
     try {
       const story = await getStoryById(storyId);
       setTitle(story.title);
       setContent(story.content);
       setIsAnonymous(story.isAnonymous);
     } catch (error) {
+      console.error('Fetch error:', error);
       toast.error('Failed to fetch story');
-      navigate('/BagikanCerita');
+      navigate('/komunitas/story/BagikanCerita');
     }
-  };
+  }, [storyId, navigate]);
+
+  useEffect(() => {
+    fetchStory();
+  }, [fetchStory]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -36,14 +40,25 @@ const EditStory = () => {
 
     setLoading(true);
     try {
+      const userDoc = await getDoc(doc(db, 'users', auth.currentUser.uid));
+      const userProfile = userDoc.exists() ? userDoc.data() : null;
+
       await updateStory(storyId, {
-        title,
-        content,
+        title: title.trim(),
+        content: content.trim(),
         isAnonymous,
+        authorName: isAnonymous ? 'Anonymous' : (userProfile?.username || userProfile?.displayName || 'User'),
+        authorAvatar: isAnonymous 
+          ? '/anonymous-avatar.png' 
+          : (userProfile?.photoURL || `https://ui-avatars.com/api/?name=${userProfile?.displayName || 'U'}&background=random`),
+        authorProfile: isAnonymous ? null : userProfile,
+        updatedAt: new Date()
       });
+      
       toast.success('Story updated successfully!');
-      navigate('/BagikanCerita');
+      navigate('/komunitas/story/BagikanCerita');
     } catch (error) {
+      console.error('Update error:', error);
       toast.error('Failed to update story');
     } finally {
       setLoading(false);
@@ -97,7 +112,7 @@ const EditStory = () => {
             </button>
             <button
               type="button"
-              onClick={() => navigate('/BagikanCerita')}
+              onClick={() => navigate('/komunitas/story/BagikanCerita')}
               className="flex-1 bg-white/10 backdrop-blur text-white font-medium px-6 py-3.5 rounded-xl
                        border border-white/20 transition-all duration-300 
                        hover:bg-red-500 hover:border-red-500 hover:shadow-lg 
