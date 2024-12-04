@@ -122,7 +122,7 @@ export default function HeroSection() {
   };
 
   return (
-    <section className="min-h-screen bg-gradient-to-b from-[#FFA7D0]  to-[#1E498E] font-jakarta">
+    <section className="min-h-screen bg-gradient-to-b from-[#FFA7D0] to-[#1E498E] font-jakarta">
       <motion.div
         className="relative min-h-screen overflow-hidden"
         variants={containerVariants}

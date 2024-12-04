@@ -36,16 +36,21 @@ service cloud.firestore {
           'commentsCount',
           'likeCount',
           'savedBy',
-          'anonymous'
+          'anonymous',
+          'mood',
+          'isPublic'
         ])
         && (
+          // For anonymous posts
           (request.resource.data.anonymous == true && (
-            request.resource.data.authorName == 'Anonymous' &&
-            (request.resource.data.authorAvatar == null || 
-             request.resource.data.authorAvatar == '/anonymous-avatar.png')
+            request.resource.data.authorName == 'Anonymous'
           )) ||
-          (request.resource.data.anonymous == false && 
-           isValidImage(request.resource.data.authorAvatar))
+          // For non-anonymous posts
+          (request.resource.data.anonymous == false && (
+            request.resource.data.authorName == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.displayName ||
+            request.resource.data.authorName == get(/databases/$(database)/documents/profiles/$(request.auth.uid)).data.displayName ||
+            request.resource.data.authorName != null
+          ))
         )
         && request.resource.data.content.size() <= 2000
         && request.resource.data.title.size() <= 100;
@@ -75,10 +80,32 @@ service cloud.firestore {
             'createdAt'
           ])
           && request.resource.data.authorId == request.auth.uid
-          && request.resource.data.content.size() <= 1000;
+          && request.resource.data.content.size() <= 1000
+          && (
+            // For anonymous comments
+            (request.resource.data.anonymous == true && (
+              request.resource.data.authorName == 'Anonymous' &&
+              (request.resource.data.authorAvatar == null || 
+               request.resource.data.authorAvatar == '/anonymous-avatar.png')
+            )) ||
+            // For non-anonymous comments
+            ((!request.resource.data.anonymous || request.resource.data.anonymous == false) && (
+              (
+                request.resource.data.authorName == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.displayName ||
+                request.resource.data.authorName == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.username ||
+                request.resource.data.authorName != null
+              ) &&
+              (
+                request.resource.data.authorAvatar == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.photoURL ||
+                request.resource.data.authorAvatar.matches('https://ui-avatars.com/api/.*') ||
+                request.resource.data.authorAvatar == '/anonymous-avatar.png'
+              )
+            ))
+          );
         
         allow update: if isAuthenticated() 
-          && resource.data.authorId == request.auth.uid;
+          && resource.data.authorId == request.auth.uid
+          && request.resource.data.content.size() <= 1000;
         
         allow delete: if isAuthenticated() && (
           resource.data.authorId == request.auth.uid ||

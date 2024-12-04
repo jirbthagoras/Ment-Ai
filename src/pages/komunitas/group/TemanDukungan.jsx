@@ -1,17 +1,14 @@
 import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import CreatePostModal from './CreatePostModal';
-import { getPosts, toggleLike, toggleSave, deletePost, createPost } from '../../../services/postService';
+import { toggleLike, toggleSave, deletePost, createPost } from '../../../services/postService';
 import { useAuth } from '../../../contexts/AuthContext';
-import { doc, getDoc, onSnapshot, collection } from 'firebase/firestore';
+import { collection, onSnapshot, query, where, orderBy } from 'firebase/firestore';
 import { db } from '../../../firebase';
 import { formatDistanceToNow } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
-
-const getValidImageUrl = (url) => {
-  if (!url) return '/anonymous-avatar.png';
-  return url.startsWith('http') ? url : '/anonymous-avatar.png';
-};
+import { fetchUserProfile } from '../../../services/profileService';
+import { FaUserSecret } from 'react-icons/fa';
 
 const moodEmojis = {
   'happy': '😊',
@@ -49,13 +46,11 @@ const TemanDukungan = () => {
   const navigate = useNavigate();
 
   // Wrap fetchUserProfile in useCallback
-  const fetchUserProfile = useCallback(async () => {
+  const fetchUserProfileData = useCallback(async () => {
     if (!user?.uid) return;
     try {
-      const userDoc = await getDoc(doc(db, 'users', user.uid));
-      if (userDoc.exists()) {
-        setUserProfile(userDoc.data());
-      }
+      const profile = await fetchUserProfile();
+      setUserProfile(profile);
     } catch (error) {
       console.error('Error fetching user profile:', error);
     }
@@ -64,167 +59,184 @@ const TemanDukungan = () => {
   // Update useEffect with fetchUserProfile dependency
   useEffect(() => {
     if (user?.uid) {
-      fetchUserProfile();
+      fetchUserProfileData();
     }
-  }, [user?.uid, fetchUserProfile]);
+  }, [user?.uid, fetchUserProfileData]);
 
+  // Single source of truth for posts with proper cleanup
+  useEffect(() => {
+    if (!user?.uid) return;
+
+    let unsubscribe;
+    const setupSubscription = async () => {
+      try {
+        let baseQuery = collection(db, 'posts');
+        let constraints = [];
+
+        if (selectedCategory !== 'all') {
+          constraints.push(where('category', '==', selectedCategory));
+        }
+
+        switch (sortBy) {
+          case 'popular':
+            constraints.push(orderBy('likedBy', 'desc'));
+            break;
+          case 'discussed':
+            constraints.push(orderBy('commentsCount', 'desc')); 
+            break;
+          default: // 'newest'
+            constraints.push(orderBy('createdAt', 'desc'));
+        }
+
+        const finalQuery = query(baseQuery, ...constraints);
+
+        unsubscribe = onSnapshot(finalQuery, (snapshot) => {
+          const postsMap = new Map();
+
+          snapshot.docs.forEach(doc => {
+            if (!postsMap.has(doc.id)) {
+              const data = doc.data();
+              const createdAt = data.createdAt?.toDate() || new Date();
+              
+              postsMap.set(doc.id, {
+                id: doc.id,
+                ...data,
+                createdAt,
+                timeAgo: formatDistanceToNow(createdAt, { addSuffix: true })
+                  .replace('about ', '')
+                  .replace('in ', 'dalam ')
+                  .replace('ago', 'yang lalu'),
+                isLiked: data.likedBy?.includes(user.uid) || false,
+                isSaved: data.savedBy?.includes(user.uid) || false,
+                likes: data.likedBy?.length || 0
+              });
+            }
+          });
+
+          setPosts(Array.from(postsMap.values()));
+        });
+
+      } catch (error) {
+        console.error('Error setting up posts subscription:', error);
+      }
+    };
+
+    setupSubscription();
+
+    return () => {
+      if (unsubscribe) {
+        unsubscribe();
+      }
+    };
+  }, [selectedCategory, sortBy, user?.uid]);
+
+  // Modify handleCreatePost to prevent double creation
   const handleCreatePost = async (postData) => {
-    if (!user?.uid) {
-      console.error('User not authenticated');
-      return;
-    }
+    if (!user?.uid) return;
 
     try {
+      setIsModalOpen(false); // Close modal first to prevent double submission
+      
       const newPostData = {
         title: postData.title.trim(),
         content: postData.content.trim(),
         authorId: user.uid,
-        authorName: postData.anonymous ? 'Anonymous' : (userProfile?.displayName || 'User'),
-        authorAvatar: postData.anonymous ? '/anonymous-avatar.png' : getValidImageUrl(userProfile?.photoURL),
+        authorName: postData.anonymous 
+          ? 'Anonymous' 
+          : (userProfile?.username || userProfile?.displayName || 'User'),
+        authorAvatar: postData.anonymous 
+          ? '/anonymous-avatar.png' 
+          : (userProfile?.photoURL || `https://ui-avatars.com/api/?name=${userProfile?.displayName || 'U'}&background=random`),
         category: postData.category,
         mood: postData.mood,
-        createdAt: new Date(),
-        commentsCount: 0,
-        likeCount: 0,
-        savedBy: [],
         anonymous: postData.anonymous,
         isPublic: true,
+        createdAt: new Date(),
+        likedBy: [],
+        savedBy: [],
+        commentsCount: 0
       };
 
-      // Add validation
-      if (newPostData.content.length > 2000) {
-        throw new Error('Content must be less than 2000 characters');
-      }
-      if (newPostData.title.length > 100) {
-        throw new Error('Title must be less than 100 characters');
-      }
-
-      const createdPost = await createPost(newPostData, user.uid);
-      
-      // Update posts state properly
-      setPosts(prevPosts => {
-        // Check if post already exists
-        const existingPostIndex = prevPosts.findIndex(p => p.id === createdPost.id);
-        if (existingPostIndex !== -1) {
-          // Update existing post
-          const updatedPosts = [...prevPosts];
-          updatedPosts[existingPostIndex] = createdPost;
-          return updatedPosts;
-        }
-        // Add new post at the beginning
-        return [createdPost, ...prevPosts];
-      });
-      
-      setIsModalOpen(false);
+      await createPost(newPostData, user.uid);
     } catch (error) {
       console.error('Error creating post:', error);
-      alert(error.message || 'Failed to create post. Please try again.');
+      alert('Failed to create post: ' + error.message);
     }
   };
 
-  // Update fetchPosts to not use removed states
-  const fetchPosts = async (category = 'all', sortBy = 'newest') => {
-    try {
-      const fetchedPosts = await getPosts(category, sortBy);
-      setPosts(fetchedPosts.map(post => ({
-        ...post,
-        id: post.id,
-        likes: post.likeCount || 0,
-        comments: post.commentsCount || 0
-      })));
-    } catch (error) {
-      console.error('Error fetching posts:', error);
-    }
-  };
-
-  useEffect(() => {
-    fetchPosts(selectedCategory, sortBy);
-  }, [selectedCategory, sortBy]);
-
-  useEffect(() => {
-    const unsubscribers = posts.map(post => {
-      const commentsRef = collection(db, 'posts', post.id, 'comments');
-      return onSnapshot(commentsRef, (snapshot) => {
-        setPostComments(prev => ({
-          ...prev,
-          [post.id]: snapshot.size
-        }));
-      });
-    });
-
-    return () => unsubscribers.forEach(unsubscribe => unsubscribe());
-  }, [posts]);
-
+  // Modify handleLike to not manually update posts
   const handleLike = async (postId) => {
-    if (!user?.uid) {
-      return;
-    }
+    if (!user?.uid) return;
     try {
-      const isLiked = await toggleLike(postId, user.uid);
-      setPosts(posts.map(post => {
-        if (post.id === postId) {
-          return {
-            ...post,
-            likeCount: isLiked ? (post.likeCount || 0) + 1 : (post.likeCount || 0) - 1,
-            isLiked
-          };
-        }
-        return post;
-      }));
+      await toggleLike(postId, user.uid);
     } catch (error) {
       console.error('Error liking post:', error);
     }
   };
 
+  // Modify handleSave to not manually update posts
   const handleSave = async (postId) => {
-    if (!user?.uid) {
-      return;
-    }
+    if (!user?.uid) return;
     try {
-      const isSaved = await toggleSave(postId, user.uid);
-      setPosts(posts.map(post => {
-        if (post.id === postId) {
-          const savedBy = post.savedBy || [];
-          return {
-            ...post,
-            savedBy: isSaved 
-              ? [...savedBy, user.uid]
-              : savedBy.filter(id => id !== user.uid),
-            isSaved
-          };
-        }
-        return post;
-      }));
+      await toggleSave(postId, user.uid);
     } catch (error) {
       console.error('Error saving post:', error);
     }
   };
 
-  const getFilteredPosts = () => {
-    let filtered = [...posts];
+  // Modify handleDeletePost to not manually update posts
+  const handleDeletePost = async (postId) => {
+    if (!user?.uid) return;
     
-    if (selectedCategory !== 'all') {
-      filtered = filtered.filter(post => post.category === selectedCategory);
-    }
-    
-    if (searchQuery) {
-      filtered = filtered.filter(post => 
-        post.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        post.content.toLowerCase().includes(searchQuery.toLowerCase())
-      );
-    }
-    
-    switch (sortBy) {
-      case 'newest':
-        return filtered;
-      case 'popular':
-        return filtered.sort((a, b) => b.likes - a.likes);
-      case 'discussed':
-        return filtered.sort((a, b) => b.comments - a.comments);
-      default:
-        return filtered;
+    if (window.confirm('Apakah Anda yakin ingin menghapus postingan ini?')) {
+      try {
+        await deletePost(postId);
+      } catch (error) {
+        console.error('Error deleting post:', error);
+      }
     }
   };
+
+  useEffect(() => {
+    const unsubscribers = new Map();
+
+    posts.forEach(post => {
+      // Only create new subscription if one doesn't exist
+      if (!unsubscribers.has(post.id)) {
+        const commentsRef = collection(db, 'posts', post.id, 'comments');
+        const commentsQuery = query(commentsRef, orderBy('createdAt', 'desc'));
+        
+        const unsubscribe = onSnapshot(
+          commentsQuery,
+          (snapshot) => {
+            setPostComments(prev => ({
+              ...prev,
+              [post.id]: snapshot.size
+            }));
+          },
+          (error) => {
+            console.error(`Error in comments subscription for post ${post.id}:`, error);
+          }
+        );
+        
+        unsubscribers.set(post.id, unsubscribe);
+      }
+    });
+
+    // Cleanup function
+    return () => {
+      unsubscribers.forEach(unsubscribe => unsubscribe());
+    };
+  }, [posts]);
+
+  const getFilteredPosts = useCallback(() => {
+    if (!searchQuery) return posts;
+    
+    return posts.filter(post => 
+      post.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      post.content.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  }, [posts, searchQuery]);
   
 
   // Update timeAgo periodically
@@ -244,19 +256,6 @@ const TemanDukungan = () => {
     return () => clearInterval(interval);
   }, []);
 
-  const handleDeletePost = async (postId) => {
-    if (!user) return;
-    
-    if (window.confirm('Apakah Anda yakin ingin menghapus postingan ini?')) {
-      try {
-        await deletePost(postId);
-        setPosts(posts.filter(post => post.id !== postId));
-      } catch (error) {
-        console.error('Error deleting post:', error);
-      }
-    }
-  };
-
   // Render post
   const renderPost = (post) => (
     <motion.div
@@ -269,50 +268,36 @@ const TemanDukungan = () => {
     >
       {/* Author Info */}
       <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-3">
-          {/* Profile Image Container */}
-          <motion.div 
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            className="relative h-12 w-12 rounded-full bg-white flex items-center justify-center shadow-lg"
-          >
-            {post.authorAvatar ? (
-              <img 
-                src={getValidImageUrl(post.authorAvatar)}
-                alt={post.authorName || 'Anonymous'}
-                className="h-full w-full rounded-full object-cover"
+        <div className="flex items-center space-x-4">
+          <div className="relative">
+            {post.anonymous ? (
+              <div className="h-12 w-12 rounded-full bg-gray-200 flex items-center justify-center">
+                <FaUserSecret className="h-8 w-8 text-gray-600" />
+              </div>
+            ) : (
+              <img
+                src={post.authorAvatar}
+                alt={post.authorName}
+                className="h-12 w-12 rounded-full object-cover ring-2 ring-white/30"
                 onError={(e) => {
-                  e.target.onerror = null;
-                  // Fallback to initial display
-                  e.target.style.display = 'none';
-                  e.target.nextElementSibling.style.display = 'flex';
+                  e.target.src = '/anonymous-avatar.png';
                 }}
               />
-            ) : (
-              <span className="text-2xl text-blue-600">
-                {(post.anonymous ? 'A' : post.authorName?.charAt(0)) || '?'}
-              </span>
             )}
-            
-            {/* Status Indicator - Only show for non-anonymous posts */}
-            {!post.anonymous && (
-              <div 
-                className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 
-                  bg-green-400 rounded-full 
-                  border-2 border-[#4B7BE5]
-                  shadow-sm"
-              />
+            {!post.anonymous && post.authorProfile && (
+              <div className="absolute -bottom-1 -right-1 bg-green-400 rounded-full w-4 h-4 
+                border-2 border-white/20"></div>
             )}
-          </motion.div>
-          
-          {/* Author Name and Time */}
-          <div className="flex flex-col">
-            <h3 className="text-white font-medium text-sm">
-              {post.anonymous ? 'Anonymous' : (post.authorName || 'User')}
+          </div>
+          <div>
+            <h3 className="font-semibold text-white">
+              {post.authorName}
             </h3>
-            <p className="text-white/60 text-xs">
-              {post.timeAgo || 'less than a minute ago'}
-            </p>
+            {!post.anonymous && post.authorProfile && (
+              <p className="text-sm text-white/60">
+                {post.authorProfile.occupation || 'Member'}
+              </p>
+            )}
           </div>
         </div>
         
@@ -515,6 +500,7 @@ const TemanDukungan = () => {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onSubmit={handleCreatePost}
+        userProfile={userProfile}
       />
     </div>
   );

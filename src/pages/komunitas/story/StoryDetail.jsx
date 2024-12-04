@@ -4,6 +4,8 @@ import { FiShare2, FiHeart, FiArrowLeft, FiTrash2 } from 'react-icons/fi';
 import { getStoryById, toggleLike, addComment, deleteComment, deleteStory } from '../../../firebase/storyOperations';
 import { auth } from '../../../firebase';
 import { toast } from 'react-toastify';
+import { getDoc, doc } from 'firebase/firestore';
+import { db } from '../../../firebase';
 
 const StoryDetail = () => {
   const { storyId } = useParams();
@@ -13,6 +15,7 @@ const StoryDetail = () => {
   const [comment, setComment] = useState('');
   const [isAnonymousComment, setIsAnonymousComment] = useState(false);
   const [isLiked, setIsLiked] = useState(false);
+  const [userProfile, setUserProfile] = useState(null);
 
   useEffect(() => {
     fetchStory();
@@ -23,6 +26,25 @@ const StoryDetail = () => {
       setIsLiked(story.likedBy?.includes(auth.currentUser.uid) || false);
     }
   }, [story]);
+
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      if (auth.currentUser) {
+        try {
+          const userDoc = await getDoc(doc(db, 'users', auth.currentUser.uid));
+          if (userDoc.exists()) {
+            const userData = userDoc.data();
+            console.log('Fetched user profile:', userData);
+            setUserProfile(userData);
+          }
+        } catch (error) {
+          console.error('Error fetching user profile:', error);
+        }
+      }
+    };
+
+    fetchUserProfile();
+  }, []);
 
   const fetchStory = async () => {
     try {
@@ -106,15 +128,41 @@ const StoryDetail = () => {
     }
 
     try {
-      await addComment(storyId, {
-        text: comment,
-        isAnonymous: isAnonymousComment
-      });
+      // Get user profile data
+      const userDoc = await getDoc(doc(db, 'users', auth.currentUser.uid));
+      const userData = userDoc.exists() ? userDoc.data() : null;
+
+      if (!userData?.username && !isAnonymousComment) {
+        toast.error('Please complete your profile first');
+        navigate('/complete-profile');
+        return;
+      }
+
+      // Create the comment data with persistent user info
+      const commentData = {
+        id: Date.now().toString(),
+        text: comment.trim(),
+        authorId: auth.currentUser.uid,
+        createdAt: new Date().toISOString(),
+        isAnonymous: isAnonymousComment,
+        // Store complete user data
+        authorName: isAnonymousComment ? 'Anonymous' : userData.username,
+        authorProfile: isAnonymousComment ? null : {
+          uid: auth.currentUser.uid,
+          username: userData.username,
+          photoURL: userData.photoURL || null,
+          displayName: userData.displayName || userData.username,
+          email: userData.email
+        }
+      };
+
+      await addComment(storyId, commentData);
       setComment('');
       setIsAnonymousComment(false);
       toast.success('Comment added successfully');
-      fetchStory(); // Refresh to show new comment
-    } catch {
+      fetchStory();
+    } catch (error) {
+      console.error('Comment error:', error);
       toast.error('Failed to add comment');
     }
   };
@@ -134,10 +182,23 @@ const StoryDetail = () => {
   };
 
   const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString('id-ID', {
+    let date;
+    if (dateString?.toDate) {
+      // Handle Firestore Timestamp
+      date = dateString.toDate();
+    } else if (dateString) {
+      // Handle ISO string
+      date = new Date(dateString);
+    } else {
+      return 'Date not available';
+    }
+
+    return date.toLocaleDateString('id-ID', {
       day: 'numeric',
       month: 'long',
-      year: 'numeric'
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
     });
   };
 
@@ -203,15 +264,40 @@ const StoryDetail = () => {
                 )}
               </div>
             </div>
-            {/* Author Info */}
-            <div className="flex items-center text-white/70 space-x-4">
-              <span>{story.authorName}</span>
-              <span>•</span>
-              <span>{new Date(story.createdAt?.toDate()).toLocaleDateString('id-ID', {
-                day: 'numeric',
-                month: 'long',
-                year: 'numeric'
-              })}</span>
+            {/* Author Info with Avatar */}
+            <div className="flex items-center text-white/70 space-x-4 bg-white/5 px-4 py-2 rounded-lg">
+              {/* User Avatar */}
+              <div className="h-10 w-10 rounded-full bg-white/10 flex items-center justify-center overflow-hidden">
+                {story.isAnonymous ? (
+                  <span className="text-xl text-white/70">A</span>
+                ) : (
+                  story.authorProfile?.photoURL ? (
+                    <img 
+                      src={story.authorProfile.photoURL || `https://ui-avatars.com/api/?name=${story.authorProfile?.username || 'U'}&background=random`}
+                      alt={story.authorProfile?.username || 'User'}
+                      className="h-full w-full rounded-full object-cover"
+                      onError={(e) => {
+                        e.target.onerror = null;
+                        e.target.src = `https://ui-avatars.com/api/?name=${story.authorProfile?.username?.charAt(0) || 'U'}&background=random`;
+                      }}
+                    />
+                  ) : (
+                    <span className="text-xl text-white/70">
+                      {story.authorProfile?.username?.charAt(0) || 'U'}
+                    </span>
+                  )
+                )}
+              </div>
+              
+              {/* Author Name and Date */}
+              <div className="flex flex-col">
+                <span className="font-medium text-white">
+                  {story.isAnonymous 
+                    ? 'Anonymous' 
+                    : (story.authorProfile?.username || story.authorName || 'User')}
+                </span>
+                <span className="text-sm text-white/60">{formatDate(story.createdAt)}</span>
+              </div>
             </div>
           </div>
 
@@ -267,27 +353,54 @@ const StoryDetail = () => {
             {/* Comments List */}
             <div className="space-y-6 mt-8">
               {story.comments?.map((comment) => (
-                <div key={comment.id} className="bg-white/5 rounded-xl p-6">
+                <div key={comment.id} className="bg-white/5 rounded-xl p-6 backdrop-blur-sm hover:bg-white/10 transition-all">
                   <div className="flex justify-between items-start mb-4">
-                    <div>
-                      <div className="font-medium text-white">
-                        {comment.isAnonymous ? 'Anonymous' : comment.authorName}
+                    <div className="flex items-center space-x-3">
+                      {/* Comment Author Avatar */}
+                      <div className="h-8 w-8 rounded-full bg-white/10 flex items-center justify-center overflow-hidden">
+                        {comment.isAnonymous ? (
+                          <span className="text-lg text-white/70">A</span>
+                        ) : (
+                          <img 
+                            src={comment.authorProfile?.photoURL || `https://ui-avatars.com/api/?name=${comment.authorProfile?.username || 'U'}&background=random`}
+                            alt={comment.authorProfile?.username || 'User'}
+                            className="h-full w-full rounded-full object-cover"
+                            onError={(e) => {
+                              e.target.onerror = null;
+                              e.target.src = `https://ui-avatars.com/api/?name=${comment.authorProfile?.username?.charAt(0) || 'U'}&background=random`;
+                            }}
+                          />
+                        )}
                       </div>
-                      <div className="text-sm text-white/60">
-                        {formatDate(comment.createdAt)}
+                      
+                      {/* Comment Author Info */}
+                      <div>
+                        <div className="font-medium text-white">
+                          {comment.isAnonymous 
+                            ? 'Anonymous' 
+                            : (comment.authorProfile?.username || comment.authorName || 'User')}
+                        </div>
+                        <div className="text-sm text-white/60">
+                          {formatDate(comment.createdAt)}
+                        </div>
                       </div>
                     </div>
+
+                    {/* Delete Button */}
                     {(auth.currentUser?.uid === comment.authorId || 
                       auth.currentUser?.uid === story.authorId) && (
                       <button
                         onClick={() => handleDeleteComment(comment.id)}
-                        className="text-white/60 hover:text-red-400 transition-colors"
+                        className="text-white/60 hover:text-red-400 transition-colors
+                                 bg-white/10 p-1.5 rounded-lg hover:bg-white/20"
                       >
                         <FiTrash2 />
                       </button>
                     )}
                   </div>
-                  <p className="text-white/80">{comment.text}</p>
+                  <p className="text-white/80 bg-white/5 p-4 rounded-lg ml-11">
+                    {comment.text}
+                  </p>
                 </div>
               ))}
             </div>

@@ -39,24 +39,27 @@ export const fetchUserProfile = async () => {
 
 export const updateUserProfile = async (userData) => {
   try {
-    const currentUser = auth.currentUser;
-    if (!currentUser) throw new Error('No user logged in');
+    const user = auth.currentUser;
+    if (!user) throw new Error('No authenticated user found');
 
-    // Update Firebase Auth profile
-    await updateProfile(currentUser, {
-      displayName: userData.displayName
-    });
-
-    // Update Firestore document
-    const userRef = doc(db, 'users', currentUser.uid);
-    await updateDoc(userRef, {
+    const userRef = doc(db, 'users', user.uid);
+    await setDoc(userRef, {
       ...userData,
       updatedAt: new Date().toISOString()
-    });
+    }, { merge: true });
 
-  } catch (err) {
-    console.error('Error updating profile:', err);
-    throw err;
+    // Update auth profile if display name or photo URL changed
+    if (userData.displayName || userData.profileImageUrl) {
+      await updateProfile(user, {
+        displayName: userData.displayName || user.displayName,
+        photoURL: userData.profileImageUrl || user.photoURL
+      });
+    }
+
+    return true;
+  } catch (error) {
+    console.error('Error updating profile:', error);
+    throw error;
   }
 };
 

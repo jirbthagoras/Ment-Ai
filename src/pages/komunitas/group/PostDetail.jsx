@@ -5,6 +5,8 @@ import { useAuth } from '../../../contexts/AuthContext';
 import { getPost, addComment, getComments, toggleLike } from '../../../services/postService';
 import { formatDistanceToNow } from 'date-fns';
 import { id } from 'date-fns/locale'; // Import Indonesian locale
+import { getDoc, doc } from 'firebase/firestore';
+import { db } from '../../../firebase';
 
 const formatDate = (timestamp) => {
   if (!timestamp) return 'Baru saja';
@@ -81,28 +83,38 @@ const PostDetail = () => {
 
   const handleSubmitComment = async (e) => {
     e.preventDefault();
-    if (!newComment.trim()) return;
-    
-    if (!user) {
-      setShowLoginPrompt(true);
+    if (!newComment.trim() || !user) {
+      if (!user) setShowLoginPrompt(true);
       return;
     }
 
     try {
       setIsSubmitting(true);
+      const userDoc = await getDoc(doc(db, 'users', user.uid));
+      const userProfile = userDoc.exists() ? userDoc.data() : null;
+
       const comment = {
-        content: newComment,
+        content: newComment.trim(),
         authorId: user.uid,
-        authorName: user.displayName || 'Anonymous',
-        authorAvatar: user.photoURL || '/anonymous-avatar.png',
+        authorName: userProfile?.username || userProfile?.displayName || 'User',
+        authorAvatar: userProfile?.photoURL || `https://ui-avatars.com/api/?name=${userProfile?.displayName || 'U'}&background=random`,
         createdAt: new Date(),
+        anonymous: false,
+        isPublic: true
       };
 
       const addedComment = await addComment(postId, comment);
-      setComments([addedComment, ...comments]);
+      
+      setComments(prevComments => [{
+        ...addedComment,
+        authorName: comment.authorName,
+        authorAvatar: comment.authorAvatar
+      }, ...prevComments]);
+      
       setNewComment('');
     } catch (error) {
       console.error('Error adding comment:', error);
+      alert('Failed to add comment. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
@@ -302,30 +314,33 @@ const PostDetail = () => {
             <motion.div 
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              className="relative h-10 w-10 rounded-full bg-white flex items-center justify-center shadow-lg flex-shrink-0"
+              className="relative h-10 w-10 rounded-full bg-white/20 flex items-center justify-center shadow-lg flex-shrink-0"
             >
-              {user?.photoURL ? (
-                <img 
-                  src={getValidImageUrl(user.photoURL)}
-                  alt={user?.displayName || 'Anonymous'}
-                  className="h-full w-full rounded-full object-cover"
-                  onError={(e) => {
-                    e.target.onerror = null;
-                    e.target.style.display = 'none';
-                    e.target.nextElementSibling.style.display = 'flex';
-                  }}
-                />
+              {user ? (
+                user.photoURL ? (
+                  <img 
+                    src={user.photoURL}
+                    alt={user.displayName || 'User'}
+                    className="h-full w-full rounded-full object-cover"
+                    onError={(e) => {
+                      e.target.onerror = null;
+                      e.target.textContent = user.displayName?.charAt(0) || '?';
+                      e.target.className = "text-xl text-white/80";
+                    }}
+                  />
+                ) : (
+                  <span className="text-xl text-white/80">
+                    {user.displayName?.charAt(0) || '?'}
+                  </span>
+                )
               ) : (
-                <span className="text-xl text-blue-600">
-                  {user?.displayName?.charAt(0) || '?'}
-                </span>
+                <span className="text-xl text-white/80">?</span>
               )}
               
               <div 
-                className="absolute -bottom-0.5 -right-0.5 w-3 h-3 
+                className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 
                   bg-green-400 rounded-full 
-                  border-2 border-[#4B7BE5]
-                  shadow-sm"
+                  border-2 border-[#4B7BE5]"
               />
             </motion.div>
             <div className="flex-1">
@@ -377,18 +392,35 @@ const PostDetail = () => {
                 className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/10 hover:bg-white/20 transition-colors"
               >
                 <div className="flex items-start gap-3 mb-3">
-                  <div className="relative w-8 h-8">
-                    <img
-                      src={comment.authorAvatar || '/anonymous-avatar.png'}
-                      alt={comment.authorName}
-                      className="w-full h-full rounded-full object-cover ring-2 ring-white/30 bg-white/10"
-                      onError={handleImageError}
-                    />
+                  <motion.div 
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    className="relative h-10 w-10 rounded-full bg-white/20 flex items-center justify-center shadow-lg flex-shrink-0"
+                  >
+                    {comment.authorAvatar ? (
+                      <img
+                        src={comment.authorAvatar}
+                        alt={comment.authorName}
+                        className="h-full w-full rounded-full object-cover"
+                        onError={(e) => {
+                          e.target.onerror = null;
+                          e.target.src = '/anonymous-avatar.png';
+                        }}
+                      />
+                    ) : (
+                      <img
+                        src="/anonymous-avatar.png"
+                        alt="Anonymous"
+                        className="h-full w-full rounded-full object-cover"
+                      />
+                    )}
+                    
                     <div 
-                      className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-400 
-                        rounded-full border-2 border-[#4B7BE5] translate-x-0 translate-y-0" 
+                      className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 
+                        bg-green-400 rounded-full 
+                        border-2 border-[#4B7BE5]"
                     />
-                  </div>
+                  </motion.div>
                   <div className="flex-grow">
                     <h4 className="text-white font-medium">{comment.authorName}</h4>
                     <p className="text-white/60 text-sm">{formatDate(comment.createdAt)}</p>

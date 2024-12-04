@@ -2,8 +2,10 @@ import { useState, useEffect } from 'react'
 import { FiHeart, FiUser } from 'react-icons/fi'
 import { useNavigate } from 'react-router-dom'
 import { auth } from '../../../firebase'
-import { createStory, getStories, deleteStory, toggleLike } from '../../../firebase/storyOperations'
+import { createStory, getStories, toggleLike } from '../../../firebase/storyOperations'
 import { toast } from 'react-toastify'
+import { getDoc, doc, serverTimestamp } from 'firebase/firestore';
+import { db } from '../../../firebase';
 
 const BagikanCerita = () => {
   const navigate = useNavigate()
@@ -13,19 +15,35 @@ const BagikanCerita = () => {
   const [content, setContent] = useState('')
   const [stories, setStories] = useState([])
   const [loading, setLoading] = useState(false)
+  const [userProfile, setUserProfile] = useState(null);
 
   useEffect(() => {
-    // Check authentication status
-    const unsubscribe = auth.onAuthStateChanged((user) => {
-      setIsAuthenticated(!!user)
-      if (!user) {
-        toast.error('Please log in to share stories')
-        navigate('/login') // Redirect to login page
+    const fetchUserProfile = async () => {
+      if (auth.currentUser) {
+        try {
+          const userDoc = await getDoc(doc(db, 'users', auth.currentUser.uid));
+          if (userDoc.exists()) {
+            setUserProfile(userDoc.data());
+          }
+        } catch (error) {
+          console.error('Error fetching user profile:', error);
+        }
       }
-    })
+    };
 
-    return () => unsubscribe()
-  }, [navigate])
+    const unsubscribe = auth.onAuthStateChanged((user) => {
+      setIsAuthenticated(!!user);
+      if (user) {
+        fetchUserProfile();
+      } else {
+        setUserProfile(null);
+        toast.error('Please log in to share stories');
+        navigate('/login');
+      }
+    });
+
+    return () => unsubscribe();
+  }, [navigate]);
 
   useEffect(() => {
     fetchStories()
@@ -42,7 +60,7 @@ const BagikanCerita = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    if (!isAuthenticated) {
+    if (!isAuthenticated || !userProfile) {
       toast.error('Please log in to share stories')
       navigate('/login')
       return
@@ -55,39 +73,42 @@ const BagikanCerita = () => {
 
     setLoading(true)
     try {
+      const displayName = userProfile.username || userProfile.displayName || userProfile.email?.split('@')[0] || 'User'
+
       await createStory({
-        title,
-        content,
+        title: title.trim(),
+        content: content.trim(),
         isAnonymous,
+        authorId: auth.currentUser.uid,
+        authorName: isAnonymous ? 'Anonymous' : displayName,
+        authorAvatar: isAnonymous 
+          ? '/anonymous-avatar.png' 
+          : (userProfile.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=random`),
+        authorProfile: isAnonymous ? null : {
+          uid: auth.currentUser.uid,
+          username: userProfile.username || null,
+          displayName: displayName,
+          photoURL: userProfile.photoURL || null,
+          email: userProfile.email || null
+        },
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+        likes: 0,
+        likedBy: [],
+        comments: []
       })
+
       toast.success('Story shared successfully!')
       setTitle('')
       setContent('')
       setIsAnonymous(false)
       fetchStories() // Refresh stories list
-    } catch {
+    } catch (error) {
+      console.error('Error creating story:', error)
       toast.error('Failed to share story')
     } finally {
       setLoading(false)
     }
-  }
-
-  const handleDelete = async (storyId, e) => {
-    e.stopPropagation() // Prevent navigation when clicking delete
-    if (window.confirm('Are you sure you want to delete this story?')) {
-      try {
-        await deleteStory(storyId)
-        toast.success('Story deleted successfully')
-        fetchStories() // Refresh stories list
-      } catch {
-        toast.error('Failed to delete story')
-      }
-    }
-  }
-
-  const handleEdit = (storyId, e) => {
-    e.stopPropagation() // Prevent navigation when clicking edit
-    navigate(`/edit-story/${storyId}`)
   }
 
   const handleLike = async (storyId, e) => {
@@ -187,10 +208,22 @@ const BagikanCerita = () => {
                 <div className="flex items-center space-x-2 text-white/70 mb-3">
                   <div className="flex items-center">
                     {story.isAnonymous ? <FiUser /> : null}
-                    <span className="ml-1">{story.authorName}</span>
+                    <span className="ml-1">
+                      {story.isAnonymous 
+                        ? 'Anonymous' 
+                        : (story.authorProfile?.username || story.authorProfile?.displayName || story.authorName || 'User')}
+                    </span>
                   </div>
                   <span>•</span>
-                  <span>{new Date(story.createdAt?.toDate()).toLocaleDateString()}</span>
+                  <span>
+                    {story.createdAt?.toDate 
+                      ? new Date(story.createdAt.toDate()).toLocaleDateString('id-ID', {
+                          day: 'numeric',
+                          month: 'long',
+                          year: 'numeric'
+                        })
+                      : 'Date not available'}
+                  </span>
                 </div>
                 <p className="text-white/80 mb-4 line-clamp-3">
                   {story.content.substring(0, 150)}...

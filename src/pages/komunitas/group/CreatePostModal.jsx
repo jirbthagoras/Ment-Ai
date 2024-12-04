@@ -3,15 +3,17 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../../../contexts/AuthContext';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../../../firebase';
-import { createPost } from '../../../services/postService';
 import PropTypes from 'prop-types';
+import { FaUserSecret } from 'react-icons/fa';
 
-const CreatePostModal = ({ isOpen, onClose, onSubmit }) => {
-  const auth = useAuth();
-  const user = auth?.user;
+const CreatePostModal = ({ 
+  isOpen = false, 
+  onClose = () => {}, 
+  onSubmit = () => {} 
+}) => {
+  const { user } = useAuth();
   const [userProfile, setUserProfile] = useState(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [formData, setFormData] = useState({
     title: '',
@@ -21,7 +23,8 @@ const CreatePostModal = ({ isOpen, onClose, onSubmit }) => {
     anonymous: false,
     commentsCount: 0,
     likeCount: 0,
-    savedBy: []
+    savedBy: [],
+    isPublic: true
   });
 
   const moodOptions = [
@@ -48,7 +51,8 @@ const CreatePostModal = ({ isOpen, onClose, onSubmit }) => {
         anonymous: false,
         commentsCount: 0,
         likeCount: 0,
-        savedBy: []
+        savedBy: [],
+        isPublic: true
       });
     }
   }, [isOpen]);
@@ -74,43 +78,16 @@ const CreatePostModal = ({ isOpen, onClose, onSubmit }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setIsLoading(true);
-    setError(null);
-
+    if (isSubmitting) return; // Prevent double submission
+    
     try {
-      if (!user?.uid) {
-        throw new Error('Please log in to create a post');
-      }
-
-      const postData = {
-        ...formData,
-        title: formData.title.trim(),
-        content: formData.content.trim(),
-        authorId: user.uid,
-        authorName: formData.anonymous ? 'Anonymous' : (userProfile?.displayName || 'User'),
-        authorAvatar: formData.anonymous ? '/anonymous-avatar.png' : (userProfile?.photoURL || ''),
-        createdAt: new Date(),
-        category: formData.category,
-        commentsCount: 0,
-        likeCount: 0,
-        savedBy: []
-      };
-
-      // Validate against rules
-      if (postData.content.length > 2000) {
-        throw new Error('Content must be less than 2000 characters');
-      }
-      if (postData.title.length > 100) {
-        throw new Error('Title must be less than 100 characters');
-      }
-
-      const newPost = await createPost(postData, user.uid);
-      onSubmit(newPost);
-      onClose();
+      setIsSubmitting(true);
+      await onSubmit(formData);
+      onClose(); // Close modal after successful submission
     } catch (error) {
-      setError(error.message);
+      console.error('Error submitting post:', error);
     } finally {
-      setIsLoading(false);
+      setIsSubmitting(false);
     }
   };
 
@@ -152,13 +129,7 @@ const CreatePostModal = ({ isOpen, onClose, onSubmit }) => {
 
           {/* Modal Body - Scrollable */}
           <div className="max-h-[calc(100vh-16rem)] overflow-y-auto">
-            <form onSubmit={handleSubmit} className="p-6 space-y-6">
-              {error && (
-                <div className="bg-red-50 text-red-500 p-3 rounded-lg text-sm">
-                  {error}
-                </div>
-              )}
-
+            <form id="postForm" onSubmit={handleSubmit} className="p-6 space-y-6">
               {/* Mood Selection */}
               <div className="space-y-2">
                 <label className="block text-gray-700 text-sm font-medium">
@@ -262,13 +233,15 @@ const CreatePostModal = ({ isOpen, onClose, onSubmit }) => {
               <div className="mb-4 p-4 bg-gray-50 rounded-lg">
                 <p className="text-sm text-gray-600">Posting sebagai:</p>
                 <div className="flex items-center gap-2 mt-2">
-                  <img 
-                    src={formData.anonymous 
-                      ? '/anonymous-avatar.png'
-                      : (userProfile?.photoURL || `https://ui-avatars.com/api/?name=${userProfile?.displayName || 'U'}&background=random`)}
-                    alt="Author avatar"
-                    className="w-8 h-8 rounded-full"
-                  />
+                  {formData.anonymous ? (
+                    <FaUserSecret className="w-8 h-8 text-gray-600" />
+                  ) : (
+                    <img 
+                      src={userProfile?.photoURL || `https://ui-avatars.com/api/?name=${userProfile?.displayName || 'U'}&background=random`}
+                      alt="Author avatar"
+                      className="w-8 h-8 rounded-full"
+                    />
+                  )}
                   <span className="font-medium">
                     {formData.anonymous 
                       ? 'Anonymous'
@@ -299,7 +272,7 @@ const CreatePostModal = ({ isOpen, onClose, onSubmit }) => {
               <button
                 type="button"
                 onClick={onClose}
-                disabled={isLoading}
+                disabled={isSubmitting}
                 className="px-6 py-2.5 rounded-lg text-gray-600 hover:bg-gray-100 
                   transition-colors border border-gray-200 disabled:opacity-50"
               >
@@ -308,13 +281,13 @@ const CreatePostModal = ({ isOpen, onClose, onSubmit }) => {
               <button
                 type="submit"
                 form="postForm"
-                disabled={isLoading}
+                disabled={isSubmitting}
                 className="px-6 py-2.5 rounded-lg bg-gradient-to-r from-[#4B7BE5] to-[#1E498E] 
                   text-white hover:opacity-90 transition-all duration-300 
                   hover:shadow-lg transform hover:-translate-y-0.5
                   flex items-center gap-2 disabled:opacity-50"
               >
-                {isLoading ? (
+                {isSubmitting ? (
                   <span className="flex items-center gap-2">
                     <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
@@ -341,12 +314,6 @@ CreatePostModal.propTypes = {
   isOpen: PropTypes.bool.isRequired,
   onClose: PropTypes.func.isRequired,
   onSubmit: PropTypes.func.isRequired
-};
-
-CreatePostModal.defaultProps = {
-  isOpen: false,
-  onClose: () => {},
-  onSubmit: () => {}
 };
 
 export default CreatePostModal; 
