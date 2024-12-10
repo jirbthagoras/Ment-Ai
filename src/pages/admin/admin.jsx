@@ -109,112 +109,122 @@ const EnhancedAppointmentCard = ({ appointment, handleChatAction }) => {
     <motion.div
       layout
       className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden hover:shadow-xl transition-all duration-300"
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3 }}
     >
-      {/* Header Section with Enhanced Patient Info */}
-      <div className="p-5 bg-gradient-to-r from-blue-50 via-blue-100 to-blue-50">
-        <div className="flex items-start justify-between">
-          <div className="flex gap-4">
-            <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center shadow-md">
-              <FaUser className="text-blue-600 text-2xl" />
+      {/* Header Section - Optimized for iPhone XR */}
+      <div className="p-2.5 xs:p-4 sm:p-5 bg-gradient-to-r from-blue-50 via-blue-100 to-blue-50">
+        <div className="flex flex-col xs:flex-row items-start justify-between gap-2 xs:gap-4">
+          {/* User Info Section */}
+          <div className="flex flex-col xs:flex-row items-center xs:items-start gap-2 xs:gap-4 w-full">
+            {/* Avatar */}
+            <div className="w-12 h-12 xs:w-16 xs:h-16 bg-white rounded-full flex items-center justify-center shadow-md shrink-0">
+              <FaUser className="text-blue-600 text-lg xs:text-2xl" />
             </div>
-            <div>
-              <div className="flex items-center gap-3 mb-1">
-                <h3 className="text-xl font-bold text-gray-800">
+            
+            {/* User Details */}
+            <div className="text-center xs:text-left w-full">
+              {/* Name and ID */}
+              <div className="flex flex-col xs:flex-row items-center xs:items-start gap-1.5 xs:gap-2 mb-1">
+                <h3 className="text-base xs:text-lg sm:text-xl font-bold text-gray-800 break-words max-w-[200px] xs:max-w-full truncate">
                   {appointment.patientName}
                 </h3>
-                <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded-md text-xs font-medium">
-                  ID: #{appointment.id?.slice(0, 6)}
-                </span>
-                <span className={getStatusBadge(appointment.status)}>
-                  {appointment.status.charAt(0).toUpperCase() + appointment.status.slice(1)}
-                </span>
+                <div className="flex flex-wrap justify-center xs:justify-start gap-1.5">
+                  <span className="px-1.5 py-0.5 bg-blue-100 text-blue-700 rounded text-[10px] xs:text-xs font-medium">
+                    ID: #{appointment.id?.slice(0, 6)}
+                  </span>
+                  <span className={`${getStatusBadge(appointment.status)} px-1.5 py-0.5 text-[10px] xs:text-xs`}>
+                    {appointment.status.charAt(0).toUpperCase() + appointment.status.slice(1)}
+                  </span>
+                </div>
               </div>
-              <div className="flex items-center gap-3 text-sm text-gray-600">
-                <span className="flex items-center gap-1">
-                  <FaCalendarAlt className="text-blue-500" />
-                  {new Date(appointment.date).toLocaleDateString('id-ID', {
-                    weekday: 'long',
-                    day: 'numeric',
-                    month: 'long',
-                    year: 'numeric'
-                  })}
+
+              {/* Date and Time */}
+              <div className="flex flex-col xs:flex-row items-center gap-1 xs:gap-3 text-[11px] xs:text-sm text-gray-600">
+                <span className="flex items-center gap-1 whitespace-normal xs:whitespace-nowrap">
+                  <FaCalendarAlt className="text-blue-500 shrink-0" />
+                  <span className="text-center xs:text-left">
+                    {new Date(appointment.date).toLocaleDateString('id-ID', {
+                      weekday: 'short',
+                      day: 'numeric',
+                      month: 'short',
+                      year: 'numeric'
+                    })}
+                  </span>
                 </span>
                 <span className="flex items-center gap-1">
-                  <FaClock className="text-blue-500" />
+                  <FaClock className="text-blue-500 shrink-0" />
                   {appointment.times[0]}
                 </span>
               </div>
             </div>
           </div>
-          <div className="flex flex-col items-end gap-2">
-            <span className="text-sm font-medium text-blue-600">
+
+          {/* Action Buttons */}
+          <div className="flex flex-col items-center xs:items-end gap-1.5 xs:gap-2 w-full xs:w-auto mt-2 xs:mt-0">
+            <span className="text-[11px] xs:text-sm font-medium text-blue-600 text-center xs:text-right">
               {getTimeRemaining(appointment.date, appointment.times[0])}
             </span>
             <motion.button
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               onClick={() => handleChatAction(appointment)}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg flex items-center gap-2 hover:bg-blue-700 transition-all duration-200 shadow-md"
+              className="w-full xs:w-auto px-3 py-1.5 xs:py-2 bg-blue-600 text-white rounded-lg flex items-center justify-center gap-1.5 hover:bg-blue-700 transition-all duration-200 shadow-md text-xs xs:text-sm"
             >
               Enter Room
-              <FaArrowRight />
+              <FaArrowRight className="text-xs xs:text-sm" />
             </motion.button>
           </div>
         </div>
       </div>
 
       {/* Main Content Section */}
-      <div className="p-5">
+      <div className="p-2.5 xs:p-4 sm:p-5">
         {/* Quick Info Cards */}
-        <div className="grid grid-cols-3 gap-4 mb-6">
-          <div className="bg-gray-50 rounded-xl p-3">
-            <div className="flex items-center gap-2 text-gray-600 mb-1">
-              <FaStethoscope className="text-blue-500" />
-              <span className="text-sm font-medium">Session Type</span>
+        <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-3 gap-2 xs:gap-4 mb-3 xs:mb-6">
+          <div className="bg-gray-50 rounded-lg xs:rounded-xl p-2.5 xs:p-4">
+            <div className="flex items-center gap-1.5 text-gray-600 mb-1">
+              <FaStethoscope className="text-blue-500 text-xs xs:text-sm" />
+              <span className="text-[11px] xs:text-sm font-medium">Session Type</span>
             </div>
-            <p className="text-gray-800 font-medium">
-              {appointment.type || 'Regular Checkup'}
+            <p className="text-gray-800 font-medium text-xs xs:text-sm">
+              {appointment.sessionType || 'Regular Consultation'}
             </p>
           </div>
-          <div className="bg-gray-50 rounded-xl p-3">
-            <div className="flex items-center gap-2 text-gray-600 mb-1">
-              <FaClock className="text-blue-500" />
-              <span className="text-sm font-medium">Duration</span>
+          <div className="bg-gray-50 rounded-lg xs:rounded-xl p-2.5 xs:p-4">
+            <div className="flex items-center gap-1.5 text-gray-600 mb-1">
+              <FaClock className="text-blue-500 text-xs xs:text-sm" />
+              <span className="text-[11px] xs:text-sm font-medium">Duration</span>
             </div>
-            <p className="text-gray-800 font-medium">60 minutes</p>
+            <p className="text-gray-800 font-medium text-xs xs:text-sm">60 minutes</p>
           </div>
-          <div className="bg-gray-50 rounded-xl p-3">
-            <div className="flex items-center gap-2 text-gray-600 mb-1">
-              <FaUserMd className="text-blue-500" />
-              <span className="text-sm font-medium">Doctor</span>
+          <div className="bg-gray-50 rounded-lg xs:rounded-xl p-2.5 xs:p-4">
+            <div className="flex items-center gap-1.5 text-gray-600 mb-1">
+              <FaUserMd className="text-blue-500 text-xs xs:text-sm" />
+              <span className="text-[11px] xs:text-sm font-medium">Doctor</span>
             </div>
-            <p className="text-gray-800 font-medium">
+            <p className="text-gray-800 font-medium text-xs xs:text-sm">
               {appointment.doctor || 'Dr. Assigned'}
             </p>
           </div>
         </div>
 
         {/* Consultation Details */}
-        <div className="mb-4">
-          <h4 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
-            <FaClipboardList className="text-blue-500" />
+        <div className="mb-3 xs:mb-4">
+          <h4 className="text-[11px] xs:text-sm font-semibold text-gray-700 mb-1.5 xs:mb-3 flex items-center gap-1.5">
+            <FaClipboardList className="text-blue-500 text-xs xs:text-sm" />
             Consultation Notes
           </h4>
-          <div className="bg-gray-50 rounded-xl p-4">
-            <p className="text-sm text-gray-600 leading-relaxed">
+          <div className="bg-gray-50 rounded-lg xs:rounded-xl p-2.5 xs:p-4">
+            <p className="text-[11px] xs:text-sm text-gray-600 leading-relaxed">
               {appointment.notes || 'No consultation notes available'}
             </p>
           </div>
         </div>
 
         {/* Expandable Section */}
-        <div className="mt-4 pt-4 border-t border-gray-100">
+        <div className="mt-2.5 xs:mt-4 pt-2.5 xs:pt-4 border-t border-gray-100">
           <button
             onClick={() => setIsExpanded(!isExpanded)}
-            className="w-full flex items-center justify-center gap-2 text-sm text-gray-600 hover:text-gray-800 transition-colors duration-200"
+            className="w-full flex items-center justify-center gap-1.5 text-[11px] xs:text-sm text-gray-600 hover:text-gray-800 transition-colors duration-200"
           >
             {isExpanded ? (
               <>
@@ -236,52 +246,48 @@ const EnhancedAppointmentCard = ({ appointment, handleChatAction }) => {
                 animate={{ height: 'auto', opacity: 1 }}
                 exit={{ height: 0, opacity: 0 }}
                 transition={{ duration: 0.3 }}
-                className="mt-4 space-y-4"
+                className="mt-2.5 xs:mt-4 space-y-2.5 xs:space-y-4"
               >
                 {/* Patient Information */}
-                <div className="bg-gray-50 rounded-xl p-4">
-                  <h5 className="text-sm font-semibold text-gray-700 mb-3">Patient Information</h5>
-                  <div className="grid grid-cols-2 gap-4">
+                <div className="bg-gray-50 rounded-lg xs:rounded-xl p-2.5 xs:p-4">
+                  <h5 className="text-[11px] xs:text-sm font-semibold text-gray-700 mb-2 xs:mb-3">
+                    Patient Information
+                  </h5>
+                  <div className="grid grid-cols-1 xs:grid-cols-2 gap-2.5 xs:gap-4">
                     <div>
-                      <p className="text-sm text-gray-600">
+                      <p className="text-[11px] xs:text-sm text-gray-600">
                         <span className="font-medium">Email:</span><br />
                         {appointment.email || 'Not provided'}
                       </p>
                     </div>
                     <div>
-                      <p className="text-sm text-gray-600">
+                      <p className="text-[11px] xs:text-sm text-gray-600">
                         <span className="font-medium">Phone:</span><br />
                         {appointment.phone || 'Not provided'}
                       </p>
                     </div>
                     <div>
-                      <p className="text-sm text-gray-600">
+                      <p className="text-[11px] xs:text-sm text-gray-600">
                         <span className="font-medium">Age:</span><br />
                         {appointment.age || 'Not provided'}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-600">
-                        <span className="font-medium">Gender:</span><br />
-                        {appointment.gender || 'Not provided'}
                       </p>
                     </div>
                   </div>
                 </div>
 
                 {/* Medical History */}
-                <div className="bg-gray-50 rounded-xl p-4">
-                  <h5 className="text-sm font-semibold text-gray-700 mb-3">Medical History</h5>
+                <div className="bg-gray-50 rounded-lg xs:rounded-xl p-2.5 xs:p-4">
+                  <h5 className="text-[11px] xs:text-sm font-semibold text-gray-700 mb-2 xs:mb-3">Medical History</h5>
                   <div className="space-y-2">
-                    <p className="text-sm text-gray-600">
+                    <p className="text-[11px] xs:text-sm text-gray-600">
                       <span className="font-medium">Previous Conditions:</span><br />
                       {appointment.medicalHistory?.conditions || 'No previous conditions recorded'}
                     </p>
-                    <p className="text-sm text-gray-600">
+                    <p className="text-[11px] xs:text-sm text-gray-600">
                       <span className="font-medium">Allergies:</span><br />
                       {appointment.medicalHistory?.allergies || 'No allergies recorded'}
                     </p>
-                    <p className="text-sm text-gray-600">
+                    <p className="text-[11px] xs:text-sm text-gray-600">
                       <span className="font-medium">Current Medications:</span><br />
                       {appointment.medicalHistory?.medications || 'No current medications'}
                     </p>
@@ -289,13 +295,13 @@ const EnhancedAppointmentCard = ({ appointment, handleChatAction }) => {
                 </div>
 
                 {/* Appointment History */}
-                <div className="bg-gray-50 rounded-xl p-4">
-                  <h5 className="text-sm font-semibold text-gray-700 mb-3">Appointment History</h5>
+                <div className="bg-gray-50 rounded-lg xs:rounded-xl p-2.5 xs:p-4">
+                  <h5 className="text-[11px] xs:text-sm font-semibold text-gray-700 mb-2 xs:mb-3">Appointment History</h5>
                   <div className="space-y-2">
-                    <p className="text-sm text-gray-600">
+                    <p className="text-[11px] xs:text-sm text-gray-600">
                       <span className="font-medium">Previous Visits:</span> {appointment.visitCount || '0'}
                     </p>
-                    <p className="text-sm text-gray-600">
+                    <p className="text-[11px] xs:text-sm text-gray-600">
                       <span className="font-medium">Last Visit:</span><br />
                       {appointment.lastVisit || 'First visit'}
                     </p>
@@ -319,6 +325,8 @@ EnhancedAppointmentCard.propTypes = {
     phone: PropTypes.string,
     age: PropTypes.string,
     gender: PropTypes.string,
+    appointmentType: PropTypes.string,
+    sessionType: PropTypes.string,
     times: PropTypes.arrayOf(PropTypes.string).isRequired,
     date: PropTypes.string.isRequired,
     status: PropTypes.string.isRequired,
@@ -612,21 +620,22 @@ const TotalEarningsCard = ({ appointments, completedConsultations }) => {
         </div>
       </div>
 
-      <div className="mt-6 grid grid-cols-2 gap-4">
-        <div className="bg-white/50 rounded-lg p-4">
+      <div className="mt-4 sm:mt-6 grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+        {/* Monthly Revenue Card */}
+        <div className="bg-white/50 rounded-lg p-3 sm:p-4">
           <div className="flex items-center gap-2 text-emerald-600 mb-2">
-            <FaMoneyBillWave />
-            <span className="text-sm font-medium">Monthly Revenue</span>
+            <FaMoneyBillWave className="text-base sm:text-lg" />
+            <span className="text-xs sm:text-sm font-medium">Monthly Revenue</span>
           </div>
           <motion.h4 
-            className="text-2xl font-bold text-gray-800"
+            className="text-xl sm:text-2xl font-bold text-gray-800 break-words"
             initial={{ scale: 0.5, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={{ duration: 0.5 }}
           >
             {formatCurrency(monthlyEarnings)}
           </motion.h4>
-          <p className="text-xs text-emerald-600 mt-2">
+          <p className="text-[10px] sm:text-xs text-emerald-600 mt-1 sm:mt-2">
             From {appointments.filter(app => {
               const appDate = new Date(app.date);
               return appDate.getMonth() === new Date().getMonth();
@@ -634,13 +643,14 @@ const TotalEarningsCard = ({ appointments, completedConsultations }) => {
           </p>
         </div>
 
-        <div className="bg-white/50 rounded-lg p-4">
+        {/* Success Rate Card */}
+        <div className="bg-white/50 rounded-lg p-3 sm:p-4">
           <div className="flex items-center gap-2 text-emerald-600 mb-2">
-            <FaUserMd />
-            <span className="text-sm font-medium">Success Rate</span>
+            <FaUserMd className="text-base sm:text-lg" />
+            <span className="text-xs sm:text-sm font-medium">Success Rate</span>
           </div>
           <motion.h4 
-            className="text-2xl font-bold text-gray-800"
+            className="text-xl sm:text-2xl font-bold text-gray-800"
             initial={{ scale: 0.5, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={{ duration: 0.5 }}
@@ -649,29 +659,31 @@ const TotalEarningsCard = ({ appointments, completedConsultations }) => {
               ? Math.round((completedConsultations / appointments.length) * 100)
               : 0}%
           </motion.h4>
-          <p className="text-xs text-emerald-600 mt-2">
+          <p className="text-[10px] sm:text-xs text-emerald-600 mt-1 sm:mt-2">
             {completedConsultations} completed
           </p>
         </div>
       </div>
 
       {/* Monthly Progress Bar */}
-      <div className="mt-6">
-        <div className="flex justify-between text-sm mb-2">
-          <span className="text-gray-600">Monthly Target ({formatCurrency(MONTHLY_TARGET)})</span>
+      <div className="mt-4 sm:mt-6">
+        <div className="flex flex-col xs:flex-row justify-between text-xs sm:text-sm mb-2 gap-1">
+          <span className="text-gray-600 break-words">
+            Monthly Target ({formatCurrency(MONTHLY_TARGET)})
+          </span>
           <span className="text-emerald-600 font-medium">
             {progressPercentage}%
           </span>
         </div>
-        <div className="w-full bg-emerald-100 rounded-full h-2">
+        <div className="w-full bg-emerald-100 rounded-full h-1.5 sm:h-2">
           <motion.div
-            className="bg-emerald-500 h-2 rounded-full"
+            className="bg-emerald-500 h-full rounded-full"
             initial={{ width: 0 }}
             animate={{ width: `${progressPercentage}%` }}
             transition={{ duration: 1, delay: 0.5 }}
           />
         </div>
-        <p className="text-xs text-emerald-600 mt-2 text-right">
+        <p className="text-[10px] sm:text-xs text-emerald-600 mt-1 sm:mt-2 text-right break-words">
           {formatCurrency(MONTHLY_TARGET - monthlyEarnings)} remaining to reach target
         </p>
       </div>
@@ -901,7 +913,7 @@ export default function Admin() {
 
       <div className="grid gap-6 lg:grid-cols-2">
         <motion.div
-          className="bg-white/90 backdrop-blur-lg rounded-2xl p-8 shadow-xl"
+          className="bg-white/90 backdrop-blur-lg rounded-2xl p-5 shadow-xl"
           initial={{ scale: 0.9, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           transition={{ duration: 0.3, delay: 0.4 }}
@@ -1103,7 +1115,7 @@ export default function Admin() {
           animate={{ scale: 1, opacity: 1 }}
           transition={{ duration: 0.3, delay: 0.6 }}
         >
-          <div className="bg-white/95 rounded-lg p-6 shadow-lg">
+          <div className="bg-white/95 rounded-lg p-5 mr-1 shadow-lg">
             <h2 className="text-xl font-semibold text-gray-800 mb-2">INFORMASI HARIAN</h2>
             <div className="text-lg font-semibold text-purple-900 mb-4">
               {new Date().toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}

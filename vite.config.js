@@ -4,17 +4,22 @@ import path from 'path'
 
 export default defineConfig({
   plugins: [react()],
-  resolve: {
-    alias: {
-      '@': path.resolve(path.dirname(''), './src'),
-    },
-  },
+  base: '/',
   build: {
+    outDir: 'dist',
     assetsDir: 'assets',
     rollupOptions: {
+      output: {
+        manualChunks: undefined
+      },
       input: {
         main: path.resolve('.', 'index.html'),
-      },
-    },
+      }
+    }
+  },
+  server: {
+    historyApiFallback: true,
+    host: true,
+    port: 3000
   },
 })

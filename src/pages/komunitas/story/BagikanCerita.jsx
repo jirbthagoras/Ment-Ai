@@ -112,20 +112,42 @@ const BagikanCerita = () => {
   }
 
   const handleLike = async (storyId, e) => {
-    e.stopPropagation() // Prevent navigation when clicking like
+    e.stopPropagation(); // Prevent event bubbling
+    
     if (!isAuthenticated) {
-      toast.error('Please log in to like stories')
-      navigate('/login')
-      return
+      toast.error('Silakan login terlebih dahulu untuk menyukai cerita');
+      return;
+    }
+
+    const story = stories.find(s => s.id === storyId);
+    if (story?.likedBy?.includes(auth.currentUser.uid)) {
+      toast.info('Anda sudah menyukai cerita ini');
+      return;
     }
 
     try {
-      await toggleLike(storyId)
-      fetchStories() // Refresh stories to update like count
-    } catch {
-      toast.error('Failed to like story')
+      await toggleLike(storyId);
+      // Update local state to reflect the new like
+      setStories(stories.map(story => {
+        if (story.id === storyId) {
+          return {
+            ...story,
+            likes: story.likes + 1,
+            likedBy: [...(story.likedBy || []), auth.currentUser.uid]
+          };
+        }
+        return story;
+      }));
+      
+      toast.success('Cerita berhasil disukai!');
+    } catch (error) {
+      // Only show error toast for unexpected errors
+      if (error.message !== 'You have already liked this story') {
+        toast.error('Terjadi kesalahan saat menyukai cerita');
+        console.error('Error liking story:', error);
+      }
     }
-  }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#A0A9FF] via-[#6E7AE2] to-[#1E498E] py-20 px-6 relative overflow-hidden">

@@ -9,7 +9,7 @@ import PropTypes from 'prop-types';
 import { fetchUserProfile, updateUserProfile, setupConsultationListener } from '../../../services/profileService';
 import { useNavigate } from 'react-router-dom';
 import { FaCheckCircle, FaClock, FaCalendarAlt, FaPlay, FaStethoscope, FaClinicMedical, FaChevronUp, FaChevronDown, FaHourglassHalf, FaUserMd } from 'react-icons/fa';
-import { FiUser, FiMail, FiPhone, FiMapPin, FiCalendar, FiLock } from 'react-icons/fi';
+import { FiUser, FiMail, FiPhone, FiMapPin, FiCalendar} from 'react-icons/fi';
 import { id } from 'date-fns/locale';
 
 // Add InfoField component definition
@@ -24,9 +24,9 @@ const InfoField = ({
   isPublic 
 }) => (
   <div className="relative">
-    <label className="block text-sm font-medium text-gray-700">{label}</label>
-    <div className="mt-1 flex items-center">
-      <span className="text-gray-400 mr-2">
+    <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
+    <div className="flex items-center">
+      <span className="text-gray-400 mr-2 flex-shrink-0">
         {icon}
       </span>
       {isEditing && !isPublic ? (
@@ -35,11 +35,11 @@ const InfoField = ({
           name={name}
           value={value || ''}
           onChange={handleInputChange}
-          className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+          className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm"
         />
       ) : (
-        <div className="flex items-center gap-2">
-          <span className="text-gray-900">
+        <div className="flex items-center gap-2 overflow-hidden">
+          <span className="text-gray-900 text-sm truncate">
             {isProtected && !isEditing ? (
               <>
                 {value ? (
@@ -56,11 +56,6 @@ const InfoField = ({
             )}
           </span>
         </div>
-      )}
-      {isProtected && !isEditing && (
-        <span className="absolute right-0 top-0 text-gray-400">
-          <FiLock className="w-4 h-4" />
-        </span>
       )}
     </div>
   </div>
@@ -512,7 +507,7 @@ ConsultationStatus.propTypes = {
 
 // Update MedicalInfoSection to use the props
 const MedicalInfoSection = ({ user, isEditing, handleInputChange }) => (
-  <div className="space-y-8 p-8 bg-gray-50 rounded-lg">
+  <div className="space-y-8 p-4 sm:p-8 bg-gray-50 rounded-lg">
     <h2 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
       <FaStethoscope className="text-blue-500" />
       Informasi Medis
@@ -587,13 +582,13 @@ const MedicalInfoSection = ({ user, isEditing, handleInputChange }) => (
 
 // Update PersonalInfoSection to use the props
 const PersonalInfoSection = ({ user, isEditing, handleInputChange }) => (
-  <div className="space-y-8 p-8">
+  <div className="space-y-8 p-4 sm:p-8">
     <h2 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
       <FiUser className="text-blue-500" />
       Informasi Pribadi
     </h2>
     
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
       <div className="space-y-4">
         <InfoField
           icon={<FiUser />}
@@ -1115,31 +1110,26 @@ export default function Profile() {
       initial="hidden"
       animate="visible"
       variants={containerVariants}
-      className="min-h-screen bg-gradient-to-br from-[#8e94f2] to-[#1e4287] py-12 px-4 sm:px-6 lg:px-8"
+      className="min-h-screen bg-gradient-to-br from-[#8e94f2] to-[#1e4287] py-6 sm:py-12 px-4 sm:px-6 lg:px-8"
     >
-      {error && (
-        <div className="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded">
-          {error}
-        </div>
-      )}
       <div className="max-w-7xl mx-auto">
-        <div className="flex flex-col lg:flex-row gap-8">
+        <div className="flex flex-col lg:flex-row gap-4 lg:gap-8">
           {/* Left Column - Profile Information */}
           <motion.div 
             variants={itemVariants}
-            className="mt-16 lg:w-2/3 bg-white rounded-2xl shadow-xl overflow-hidden"
+            className="mt-4 sm:mt-8 lg:mt-16 w-full lg:w-2/3 bg-white rounded-2xl shadow-xl overflow-hidden"
           >
             {/* Profile Header */}
             <motion.div 
               variants={itemVariants}
-              className="bg-gradient-to-r from-[#8e94f2] to-[#1e4287] px-8 py-6"
+              className="bg-gradient-to-r from-[#8e94f2] to-[#1e4287] px-4 sm:px-8 py-4 sm:py-6"
             >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-4">
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-4 sm:gap-0">
+                <div className="flex flex-col sm:flex-row items-center sm:space-x-4 text-center sm:text-left">
                   <motion.div 
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
-                    className="h-20 w-20 rounded-full bg-white flex items-center justify-center shadow-lg overflow-hidden"
+                    className="h-16 w-16 sm:h-20 sm:w-20 rounded-full bg-white flex items-center justify-center shadow-lg overflow-hidden mb-2 sm:mb-0"
                   >
                     {user.profileImage ? (
                       <img
@@ -1158,13 +1148,13 @@ export default function Profile() {
                     )}
                   </motion.div>
                   <div className="text-white">
-                    <h1 className="text-2xl font-bold">{user.username || user.displayName}</h1>
-                    <p className="text-blue-100">{user.email}</p>
+                    <h1 className="text-xl sm:text-2xl font-bold">{user.username || user.displayName}</h1>
+                    <p className="text-blue-100 text-sm sm:text-base">{user.email}</p>
                   </div>
                 </div>
                 <button
                   onClick={handleLogout}
-                  className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                  className="px-4 py-2 bg-red-600 text-white text-sm rounded-lg hover:bg-red-700 transition-colors w-full sm:w-auto"
                 >
                   Logout
                 </button>
@@ -1172,8 +1162,8 @@ export default function Profile() {
             </motion.div>
 
             {/* Navigation Tabs */}
-            <motion.div variants={itemVariants} className="border-b border-gray-200">
-              <nav className="flex -mb-px">
+            <motion.div variants={itemVariants} className="border-b border-gray-200 overflow-x-auto">
+              <nav className="flex">
                 <motion.button
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
@@ -1182,7 +1172,7 @@ export default function Profile() {
                     activeTab === 'profile'
                       ? 'border-blue-500 text-blue-600'
                       : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                  } whitespace-nowrap py-4 px-8 border-b-2 font-medium text-sm transition-all duration-200`}
+                  } whitespace-nowrap py-3 sm:py-4 px-4 sm:px-8 border-b-2 font-medium text-xs sm:text-sm flex-1 sm:flex-none text-center transition-all duration-200`}
                 >
                   Informasi Profil
                 </motion.button>
@@ -1194,7 +1184,7 @@ export default function Profile() {
                     activeTab === 'history'
                       ? 'border-blue-500 text-blue-600'
                       : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                  } whitespace-nowrap py-4 px-8 border-b-2 font-medium text-sm transition-all duration-200`}
+                  } whitespace-nowrap py-3 sm:py-4 px-4 sm:px-8 border-b-2 font-medium text-xs sm:text-sm flex-1 sm:flex-none text-center transition-all duration-200`}
                 >
                   Jadwal Konsultasi
                 </motion.button>
@@ -1204,7 +1194,7 @@ export default function Profile() {
             {/* Content */}
             <motion.div 
               variants={itemVariants}
-              className="p-8"
+              className="p-4 sm:p-8"
             >
               {activeTab === 'profile' ? (
                 <motion.form 
@@ -1272,13 +1262,16 @@ export default function Profile() {
           </motion.div>
 
           {/* Right Column */}
-          <motion.div variants={itemVariants} className="mt-16 lg:w-1/3 space-y-6">
+          <motion.div 
+            variants={itemVariants} 
+            className="mt-4 sm:mt-8 lg:mt-16 w-full lg:w-1/3 space-y-4 sm:space-y-6"
+          >
             <QuickStatsCard />
             <ConsultationInfo />
             <RecentActivityCard />
             <motion.div
               whileHover={{ scale: 1.02 }}
-              className="bg-white p-6 rounded-2xl shadow-xl"
+              className="bg-white p-4 sm:p-6 rounded-2xl shadow-xl"
             >
               <h3 className="text-lg font-semibold text-gray-900 mb-4">
                 Konsultasi Mendatang
