@@ -3,6 +3,8 @@ import { IoSend, IoSparkles } from "react-icons/io5";
 import { FaHeart, FaComments } from "react-icons/fa";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
+import talkani from '../assets/gif/Talk.mp4'
+import idleani from '../assets/gif/Idle.mp4'
 import Groq from "groq-sdk";
 
 const groq = new Groq({ apiKey: import.meta.env.VITE_GROQ_KEY, dangerouslyAllowBrowser: true });
@@ -120,19 +122,19 @@ export default function AiPage() {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.5 }}
-      className="min-h-screen bg-gradient-to-b from-pink-300 via-purple-400 to-blue-600 p-6 flex items-center justify-center"
+      className="min-h-screen bg-[#A0A9FF] p-4 sm:p-6 flex items-center justify-center"
     >
-      <div className="w-full max-w-6xl">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center justify-items-center">
+      <div className="w-full max-w-7xl">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8 items-center justify-items-center">
           <motion.div
             variants={containerVariants}
             initial="hidden"
             animate="visible"
-            className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 shadow-xl w-full max-w-xl"
+            className="bg-white/10 backdrop-blur-lg rounded-2xl p-4 sm:p-6 shadow-xl w-full max-w-xl order-2 lg:order-1"
           >
             <div 
               id="chat-container"
-              className="space-y-4 max-h-[60vh] overflow-y-auto mb-4 scrollbar-thin scrollbar-thumb-white/20 scrollbar-track-transparent"
+              className="space-y-4 max-h-[50vh] sm:max-h-[60vh] overflow-y-auto mb-4 scrollbar-thin scrollbar-thumb-white/20 scrollbar-track-transparent"
             >
               <AnimatePresence mode='popLayout'>
                 {chatMessages.map((msg, index) => (
@@ -146,19 +148,19 @@ export default function AiPage() {
                   >
                     {msg.sender === "Dr. Men" ? (
                       <div className="flex items-start gap-3">
-                        <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center">
-                          <FaComments className="text-white text-sm" />
+                        <div className="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center">
+                          <FaComments className="text-white text-lg" />
                         </div>
                         <div className="flex-1">
-                          <div className="text-sm text-white/80 mb-1">{msg.sender}</div>
-                          <div className="bg-white rounded-2xl rounded-tl-none p-4 text-sm text-gray-800 shadow-lg">
+                          <div className="text-sm text-white/80 mb-1">Dr. Men</div>
+                          <div className="bg-white rounded-3xl rounded-tl-lg p-4 text-gray-800 shadow-lg max-w-[85%]">
                             {msg.text}
                           </div>
                         </div>
                       </div>
                     ) : (
                       <div className="flex justify-end">
-                        <div className="bg-indigo-500 text-white rounded-2xl rounded-tr-none p-4 text-sm max-w-[70%] shadow-lg">
+                        <div className="bg-white/90 text-gray-800 rounded-3xl rounded-tr-lg p-4 max-w-[85%] shadow-lg">
                           {msg.text}
                         </div>
                       </div>
@@ -178,38 +180,35 @@ export default function AiPage() {
               )}
             </div>
 
-            <motion.div
-              initial={{ y: 20, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.5 }}
-              className="relative"
-            >
-              <input
-                type="text"
-                placeholder="Haii, apa yang kamu rasakan hari ini sobat?"
-                value={message}
-                onChange={(e) => setMessage(e.target.value)}
-                onKeyPress={(e) => e.key === "Enter" && handleSendMessage()}
-                className="pl-7 w-full bg-white/90 rounded-xl border-0 pr-14 py-4 text-gray-800 placeholder-gray-500 shadow-lg focus:ring-2 focus:ring-purple-400 transition-all duration-300"
-                aria-label="Message input"
-              />
-              <motion.button
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.9 }}
-                onClick={handleSendMessage}
-                className="absolute right-2 top-1/2 -translate-y-1/2 h-10 w-10 rounded-full bg-purple-500 hover:bg-purple-600 flex items-center justify-center text-white shadow-lg transition-colors duration-300"
-                aria-label="Send message"
-              >
-                <IoSend className="h-5 w-5" />
-              </motion.button>
-            </motion.div>
+            <div className="relative mt-4">
+              <div className="relative flex items-center">
+                <input
+                  type="text"
+                  placeholder="Haii, apa yang kamu rasakan hari ini sobat?"
+                  value={message}
+                  onChange={(e) => setMessage(e.target.value)}
+                  onKeyPress={(e) => e.key === "Enter" && handleSendMessage()}
+                  className="w-full bg-white/90 rounded-full border-0 pl-6 pr-16 py-4 text-gray-800 placeholder-gray-500 shadow-lg focus:ring-2 focus:ring-purple-400 transition-all duration-300"
+                  aria-label="Message input"
+                />
+                <motion.button
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
+                  onClick={handleSendMessage}
+                  className="absolute right-2 flex items-center justify-center w-12 h-12 rounded-full bg-purple-500 hover:bg-purple-600 text-white shadow-lg transition-colors duration-300"
+                  aria-label="Send message"
+                >
+                  <IoSend className="h-5 w-5" />
+                </motion.button>
+              </div>
+            </div>
           </motion.div>
 
           <motion.div
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={{ delay: 0.3, type: "spring", stiffness: 260, damping: 20 }}
-            className="w-full max-w-md flex flex-col items-center"
+            className="w-full max-w-[300px] sm:max-w-md flex flex-col items-center order-1 lg:order-2 mb-6 lg:mb-0"
           >
             <div className="relative w-full">
               <motion.div
@@ -240,22 +239,29 @@ export default function AiPage() {
                 <FaHeart />
               </motion.div>
 
-              <motion.img
-                whileHover={{ scale: 1.05, rotate: [0, -5, 5, 0] }}
+              <motion.video
                 transition={{ type: "spring", stiffness: 400, damping: 10 }}
-                src={isTalking ? "src/assets/gif/TalkAni.gif" : "src/assets/gif/IdleAni.gif"}
+                src={isTalking ? talkani : idleani}
                 alt="Dr. Men - Owl Doctor Character"
-                className="bg-transparent w-full max-w-md mx-auto drop-shadow-2xl"
+                className="w-[200px] sm:w-full max-w-md mx-auto bg-transparent object-contain rounded-3xl shadow-xl"
+                style={{ 
+                  backgroundColor: 'transparent',
+                  objectFit: 'contain',
+                }}
+                autoPlay
+                loop
+                muted
+                playsInline
               />
 
               <motion.div
                 initial={{ y: 20, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ delay: 0.6 }}
-                className="text-center mt-6"
+                className="text-center mt-4 sm:mt-6"
               >
-                <h2 className="text-3xl font-bold text-white mb-2">Dr. Men</h2>
-                <p className="text-lg text-white/90">Teman ternyaman kamu untuk bercerita</p>
+                <h2 className="text-2xl sm:text-3xl font-bold text-white mb-1 sm:mb-2">Dr. Men</h2>
+                <p className="text-base sm:text-lg text-white/90">Teman ternyaman kamu untuk bercerita</p>
               </motion.div>
             </div>
           </motion.div>

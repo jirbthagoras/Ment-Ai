@@ -146,12 +146,12 @@ export default function RuangKonsultasi() {
       {/* Enhanced Header with Glass Effect */}
       <div className="bg-white/80 backdrop-blur-lg shadow-lg border-b border-blue-100 sticky top-0 z-50">
         <div className="max-w-5xl mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
             <motion.button
               whileHover={{ scale: 1.05, x: -5 }}
               whileTap={{ scale: 0.95 }}
               onClick={() => navigate('/admin')}
-              className="flex items-center text-gray-600 hover:text-blue-600 transition-all duration-200 bg-white/80 px-4 py-2 rounded-full shadow-sm"
+              className="flex items-center text-gray-600 hover:text-blue-600 transition-all duration-200 bg-white/80 px-4 py-2 rounded-full shadow-sm w-full sm:w-auto justify-center sm:justify-start"
             >
               <FaArrowLeft className="mr-2" />
               <span className="font-medium">Kembali</span>
@@ -160,7 +160,7 @@ export default function RuangKonsultasi() {
             <motion.div 
               initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="flex items-center bg-blue-600/10 px-6 py-3 rounded-full shadow-sm"
+              className="flex items-center bg-blue-600/10 px-6 py-3 rounded-full shadow-sm w-full sm:w-auto justify-center"
             >
               <div className="relative">
                 <FaUser className="text-blue-600 text-2xl" />
@@ -175,7 +175,7 @@ export default function RuangKonsultasi() {
             <motion.div 
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
-              className="flex flex-col items-end bg-white/80 px-5 py-3 rounded-xl shadow-sm"
+              className="flex flex-col items-center sm:items-end bg-white/80 px-5 py-3 rounded-xl shadow-sm w-full sm:w-auto"
             >
               <div className="flex items-center text-blue-600 font-medium">
                 <FaClock className="mr-2" />
@@ -188,13 +188,13 @@ export default function RuangKonsultasi() {
           </div>
 
           {/* Add consultation controls */}
-          <div className="flex items-center gap-4 mt-4">
+          <div className="flex flex-col sm:flex-row items-center gap-4 mt-4">
             {consultationStatus === 'ready' && (
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={handleStartConsultation}
-                className="bg-green-600 text-white px-4 py-2 rounded-lg font-medium"
+                className="bg-green-600 text-white px-4 py-2 rounded-lg font-medium w-full sm:w-auto"
               >
                 Mulai Konsultasi
               </motion.button>
@@ -204,12 +204,12 @@ export default function RuangKonsultasi() {
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={handleEndConsultation}
-                className="bg-red-600 text-white px-4 py-2 rounded-lg font-medium"
+                className="bg-red-600 text-white px-4 py-2 rounded-lg font-medium w-full sm:w-auto"
               >
                 Akhiri Konsultasi
               </motion.button>
             )}
-            <div className="text-sm">
+            <div className="text-sm text-center sm:text-left w-full sm:w-auto">
               Status: 
               <span className={`ml-2 font-medium ${
                 consultationStatus === 'ready' ? 'text-yellow-600' :
@@ -226,17 +226,17 @@ export default function RuangKonsultasi() {
       </div>
 
       {/* Enhanced Chat Container */}
-      <div className="max-w-5xl mx-auto px-4 py-6">
+      <div className="max-w-5xl mx-auto px-2 sm:px-4 py-6">
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-white/80 backdrop-blur-md rounded-2xl shadow-xl border border-blue-100/50 h-[calc(100vh-220px)] flex flex-col"
+          className="bg-white/80 backdrop-blur-md rounded-2xl shadow-xl border border-blue-100/50 h-[calc(100vh-280px)] sm:h-[calc(100vh-220px)] flex flex-col"
         >
           {/* Chat Header Info */}
-          <div className="px-6 py-4 border-b border-blue-50">
-            <div className="flex items-center justify-between">
+          <div className="px-3 sm:px-6 py-4 border-b border-blue-50">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-2">
               <div className="flex items-center space-x-4">
-                <span className="text-sm text-gray-500">Consultation ID: #{appointmentId?.slice(-6)}</span>
+                <span className="text-sm text-gray-500">ID: #{appointmentId?.slice(-6)}</span>
                 <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
                   Active Session
                 </span>
@@ -248,7 +248,7 @@ export default function RuangKonsultasi() {
           </div>
 
           {/* Messages Area */}
-          <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4 scrollbar-thin scrollbar-thumb-blue-200 hover:scrollbar-thumb-blue-300 scrollbar-track-transparent">
+          <div className="flex-1 overflow-y-auto px-3 sm:px-6 py-4 space-y-4">
             {messages.map((message) => (
               <motion.div
                 key={message.id}
@@ -256,13 +256,11 @@ export default function RuangKonsultasi() {
                 animate={{ opacity: 1, y: 0 }}
                 className={`flex ${message.type === 'doctor' ? 'justify-end' : 'justify-start'}`}
               >
-                <div
-                  className={`max-w-[70%] rounded-2xl p-4 shadow-sm transition-all duration-200 hover:shadow-md ${
-                    message.type === 'doctor'
-                      ? 'bg-gradient-to-br from-blue-600 to-blue-700 text-white'
-                      : 'bg-gradient-to-br from-gray-50 to-gray-100 text-gray-800 border border-gray-100'
-                  }`}
-                >
+                <div className={`max-w-[85%] sm:max-w-[70%] rounded-2xl p-3 sm:p-4 ${
+                  message.type === 'doctor'
+                    ? 'bg-gradient-to-br from-blue-600 to-blue-700 text-white'
+                    : 'bg-gradient-to-br from-gray-50 to-gray-100 text-gray-800 border border-gray-100'
+                }`}>
                   <div className="text-sm font-medium mb-1 flex items-center">
                     {message.type === 'patient' && (
                       <div className="bg-blue-100 p-1 rounded-full mr-2">
@@ -287,25 +285,25 @@ export default function RuangKonsultasi() {
           </div>
 
           {/* Enhanced Message Input */}
-          <div className="p-4 border-t border-blue-50 bg-gray-50/80 backdrop-blur-md rounded-b-2xl">
-            <form onSubmit={handleSendMessage} className="flex gap-3">
+          <div className="p-2 sm:p-4 border-t border-blue-50 bg-gray-50/80 backdrop-blur-md rounded-b-2xl">
+            <form onSubmit={handleSendMessage} className="flex gap-2 sm:gap-3">
               <div className="flex-1 relative">
                 <input
                   type="text"
                   value={newMessage}
                   onChange={(e) => setNewMessage(e.target.value)}
                   placeholder="Ketik pesan..."
-                  className="w-full rounded-full pl-6 pr-24 py-4 border border-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all duration-200 bg-white/90"
+                  className="w-full rounded-full pl-4 sm:pl-6 pr-16 sm:pr-24 py-3 sm:py-4 border border-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all duration-200 bg-white/90 text-sm sm:text-base"
                 />
-                <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center space-x-3">
+                <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center space-x-2 sm:space-x-3">
                   <motion.button
                     type="button"
                     whileHover={{ scale: 1.1 }}
                     whileTap={{ scale: 0.9 }}
                     onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-                    className="text-gray-400 hover:text-blue-500 transition-colors p-2"
+                    className="text-gray-400 hover:text-blue-500 transition-colors p-1 sm:p-2"
                   >
-                    <FaSmile className="w-5 h-5" />
+                    <FaSmile className="w-4 h-4 sm:w-5 sm:h-5" />
                   </motion.button>
                 </div>
 
@@ -317,15 +315,14 @@ export default function RuangKonsultasi() {
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: 10 }}
-                      className="absolute right-0 bottom-full mb-2"
-                      style={{ zIndex: 1000 }}
+                      className="absolute right-0 bottom-full mb-2 z-50"
                     >
-                      <div className="shadow-xl rounded-lg overflow-hidden">
+                      <div className="shadow-xl rounded-lg overflow-hidden scale-90 sm:scale-100 origin-bottom-right">
                         <EmojiPicker
                           onEmojiClick={onEmojiClick}
                           autoFocusSearch={false}
-                          width={325}
-                          height={400}
+                          width={window.innerWidth < 640 ? 280 : 325}
+                          height={350}
                           searchPlaceHolder="Cari emoji..."
                           previewConfig={{
                             showPreview: false
@@ -341,16 +338,16 @@ export default function RuangKonsultasi() {
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 type="submit"
-                className="bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-full p-4 hover:shadow-lg transition-all duration-200 shadow-md"
+                className="bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-full p-3 sm:p-4 hover:shadow-lg transition-all duration-200 shadow-md"
               >
-                <FaPaperPlane className="w-5 h-5" />
+                <FaPaperPlane className="w-4 h-4 sm:w-5 sm:h-5" />
               </motion.button>
             </form>
           </div>
         </motion.div>
 
         {/* Session Info */}
-        <div className="mt-4 text-center text-sm text-gray-500">
+        <div className="mt-4 text-center text-xs sm:text-sm text-gray-500">
           <span className="inline-flex items-center">
             <span className="w-2 h-2 bg-green-500 rounded-full mr-2"></span>
             Secure end-to-end consultation session

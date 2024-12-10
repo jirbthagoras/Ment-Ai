@@ -72,12 +72,12 @@ export default function RuangKonsultasiUser() {
       {/* Header */}
       <div className="bg-white/80 backdrop-blur-lg shadow-lg border-b border-blue-100 sticky top-0 z-50">
         <div className="max-w-5xl mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
             <motion.button
               whileHover={{ scale: 1.05, x: -5 }}
               whileTap={{ scale: 0.95 }}
               onClick={() => navigate('/profile')}
-              className="flex items-center text-gray-600 hover:text-blue-600 transition-all duration-200 bg-white/80 px-4 py-2 rounded-full shadow-sm"
+              className="flex items-center text-gray-600 hover:text-blue-600 transition-all duration-200 bg-white/80 px-4 py-2 rounded-full shadow-sm w-full sm:w-auto justify-center sm:justify-start"
             >
               <FaArrowLeft className="mr-2" />
               <span className="font-medium">Kembali</span>
@@ -86,7 +86,7 @@ export default function RuangKonsultasiUser() {
             <motion.div 
               initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="flex items-center bg-blue-600/10 px-6 py-3 rounded-full shadow-sm"
+              className="flex items-center bg-blue-600/10 px-6 py-3 rounded-full shadow-sm w-full sm:w-auto justify-center"
             >
               <div className="relative">
                 <FaUserMd className="text-blue-600 text-2xl" />
@@ -101,7 +101,7 @@ export default function RuangKonsultasiUser() {
             <motion.div 
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
-              className="flex flex-col items-end bg-white/80 px-5 py-3 rounded-xl shadow-sm"
+              className="flex flex-col items-center sm:items-end bg-white/80 px-5 py-3 rounded-xl shadow-sm w-full sm:w-auto"
             >
               <div className="flex items-center text-blue-600 font-medium">
                 <FaClock className="mr-2" />
@@ -116,8 +116,8 @@ export default function RuangKonsultasiUser() {
       </div>
 
       {/* Chat Area */}
-      <div className="max-w-4xl mx-auto px-4 py-6">
-        <div className="bg-white rounded-lg shadow-md h-[calc(100vh-250px)] flex flex-col">
+      <div className="max-w-4xl mx-auto px-2 sm:px-4 py-6">
+        <div className="bg-white rounded-lg shadow-md h-[calc(100vh-280px)] sm:h-[calc(100vh-250px)] flex flex-col">
           {/* Consultation Status Banner */}
           {consultationStatus !== 'active' && (
             <motion.div
@@ -147,7 +147,7 @@ export default function RuangKonsultasiUser() {
           )}
 
           {/* Messages */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-4">
+          <div className="flex-1 overflow-y-auto p-2 sm:p-4 space-y-4">
             {messages.map((message) => (
               <motion.div
                 key={message.id}
@@ -155,7 +155,7 @@ export default function RuangKonsultasiUser() {
                 animate={{ opacity: 1, y: 0 }}
                 className={`flex ${message.type === 'patient' ? 'justify-end' : 'justify-start'}`}
               >
-                <div className={`max-w-[70%] rounded-lg p-3 ${
+                <div className={`max-w-[85%] sm:max-w-[70%] rounded-lg p-3 ${
                   message.type === 'patient'
                     ? 'bg-blue-500 text-white'
                     : 'bg-gray-100 text-gray-800'
@@ -171,8 +171,8 @@ export default function RuangKonsultasiUser() {
           </div>
 
           {/* Message Input */}
-          <div className="p-4 border-t border-blue-50 bg-gray-50/80 backdrop-blur-md">
-            <form onSubmit={handleSendMessage} className="flex gap-3">
+          <div className="p-2 sm:p-4 border-t border-blue-50 bg-gray-50/80 backdrop-blur-md">
+            <form onSubmit={handleSendMessage} className="flex gap-2 sm:gap-3">
               <div className="flex-1 relative">
                 <input
                   type="text"
@@ -184,9 +184,9 @@ export default function RuangKonsultasiUser() {
                       : "Menunggu dokter memulai konsultasi..."
                   }
                   disabled={consultationStatus !== 'active'}
-                  className={`w-full rounded-full pl-6 pr-24 py-4 border border-blue-100 
+                  className={`w-full rounded-full pl-4 sm:pl-6 pr-16 sm:pr-24 py-3 sm:py-4 border border-blue-100 
                     focus:outline-none focus:ring-2 focus:ring-blue-400 
-                    focus:border-transparent transition-all duration-200 
+                    focus:border-transparent transition-all duration-200 text-sm sm:text-base
                     ${consultationStatus !== 'active' 
                       ? 'bg-gray-100 text-gray-500 cursor-not-allowed' 
                       : 'bg-white/90'}`}
@@ -233,12 +233,12 @@ export default function RuangKonsultasiUser() {
                 whileTap={{ scale: 0.95 }}
                 type="submit"
                 disabled={consultationStatus !== 'active'}
-                className={`rounded-full p-4 transition-all duration-200 
+                className={`rounded-full p-3 sm:p-4 transition-all duration-200 
                   ${consultationStatus === 'active'
                     ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white hover:shadow-lg'
                     : 'bg-gray-300 text-gray-500 cursor-not-allowed'}`}
               >
-                <FaPaperPlane className="w-5 h-5" />
+                <FaPaperPlane className="w-4 h-4 sm:w-5 sm:h-5" />
               </motion.button>
             </form>
           </div>

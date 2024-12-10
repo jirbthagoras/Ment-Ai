@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom'
 import { FaGoogle, FaEyeSlash, FaEye } from 'react-icons/fa';
 import { motion } from 'framer-motion';
 import { auth, db } from '../firebase';
-import { signInWithEmailAndPassword, createUserWithEmailAndPassword, GoogleAuthProvider, onAuthStateChanged, signInWithRedirect, getRedirectResult } from 'firebase/auth';
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword, GoogleAuthProvider, onAuthStateChanged, signInWithPopup, getRedirectResult } from 'firebase/auth';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
 
 import logow from '../assets/LogoW.png';
@@ -41,38 +41,39 @@ export default function Component() {
         prompt: 'select_account'
       });
       
-      await signInWithRedirect(auth, provider);
+      // Use signInWithPopup instead of redirect for better UX
+      const result = await signInWithPopup(auth, provider);
+      
+      if (result?.user) {
+        const userStatus = await saveUserData(result.user.uid, {
+          email: result.user.email,
+          displayName: result.user.displayName,
+          photoURL: result.user.photoURL
+        });
+        
+        if (userStatus === 'new') {
+          // New user - redirect to complete profile
+          navigate('/complete-profile');
+        } else if (userStatus === 'existing') {
+          // Existing user - check role and redirect
+          const userDocRef = doc(db, 'users', result.user.uid);
+          const userDocSnap = await getDoc(userDocRef);
+          
+          if (userDocSnap.exists()) {
+            const userData = userDocSnap.data();
+            if (userData.isAdmin) {
+              navigate('/admin');
+            } else {
+              navigate('/');
+            }
+          }
+        }
+      }
     } catch (err) {
       console.error('Google login error:', err);
       setError('Terjadi kesalahan saat login dengan Google.');
     }
   };
-
-  useEffect(() => {
-    const handleRedirectResult = async () => {
-      try {
-        const result = await getRedirectResult(auth);
-        if (result?.user) {
-          const saved = await saveUserData(result.user.uid, {
-            email: result.user.email,
-            displayName: result.user.displayName,
-            photoURL: result.user.photoURL
-          });
-          
-          if (saved) {
-            await checkUserRole(result.user.uid);
-          } else {
-            setError('Gagal menyimpan data pengguna.');
-          }
-        }
-      } catch (error) {
-        console.error('Redirect result error:', error);
-        setError('Gagal login dengan Google.');
-      }
-    };
-
-    handleRedirectResult();
-  }, []);
 
   const saveUserData = async (uid, userData) => {
     try {
@@ -82,7 +83,7 @@ export default function Component() {
       const userDoc = await getDoc(userDocRef);
       
       if (!userDoc.exists()) {
-        // New user
+        // New user - only save minimal data
         await setDoc(userDocRef, {
           email: userData.email,
           displayName: userData.displayName || '',
@@ -94,18 +95,19 @@ export default function Component() {
           lastLogin: new Date(),
           status: 'active'
         });
+        return 'new'; // Return status for new user
       } else {
-        // Update existing user's last login
+        // Existing user - update last login
         await setDoc(userDocRef, {
           lastLogin: new Date()
         }, { merge: true });
+        return 'existing'; // Return status for existing user
       }
-      return true;
     } catch (error) {
       console.error('Error saving user data:', error);
-      return false;
+      return 'error';
     }
-  }
+  };
 
   const checkUserRole = async (uid) => {
     try {
@@ -122,7 +124,7 @@ export default function Component() {
       if (userData.isAdmin) {
         navigate('/admin')
       } else {
-        navigate('/home')
+        navigate('/')
       }
     } catch (error) {
       console.error('Error checking user role:', error)
@@ -139,41 +141,31 @@ export default function Component() {
       return;
     }
 
-    if (!isLogin && password !== confirmPassword) {
-      setError("Password tidak cocok.");
-      return;
-    }
-
-    if (!isLogin && password.length < 6) {
-      setError("Password minimal 6 karakter.");
-      return;
-    }
-
     try {
       if (isLogin) {
         // Login
         const userCredential = await signInWithEmailAndPassword(auth, email, password);
-        const saved = await saveUserData(userCredential.user.uid, {
-          email: userCredential.user.email,
-          displayName: userCredential.user.displayName,
-          photoURL: userCredential.user.photoURL
-        });
+        const userDocRef = doc(db, 'users', userCredential.user.uid);
+        const userDocSnap = await getDoc(userDocRef);
         
-        if (saved) {
-          await checkUserRole(userCredential.user.uid);
-        } else {
-          setError('Gagal menyimpan data pengguna.');
+        if (userDocSnap.exists()) {
+          const userData = userDocSnap.data();
+          if (userData.isAdmin) {
+            navigate('/admin');
+          } else {
+            navigate('/');
+          }
         }
       } else {
         // Register
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-        const saved = await saveUserData(userCredential.user.uid, {
+        const userStatus = await saveUserData(userCredential.user.uid, {
           email: email,
           displayName: '',
           photoURL: ''
         });
         
-        if (saved) {
+        if (userStatus === 'new') {
           navigate('/complete-profile');
         } else {
           setError('Gagal menyimpan data pengguna.');

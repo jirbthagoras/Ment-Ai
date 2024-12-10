@@ -12,6 +12,11 @@ import {
   validateBookingData, 
   createBookingData 
 } from '../../services/consultationService'
+import dryossy from '../../assets/doctor/dr-yossy.jpg'
+import drstevanus from '../../assets/doctor/dr-stevanus.png'
+import logoBCA from '../../assets/logo/logobca.png'
+import logoGopay from '../../assets/logo/logo-gopay-vector.png'
+import poster from '../../assets/poster.png'
 
 const CONSULTATION_PRICE = 25000;
 
@@ -231,7 +236,7 @@ export default function Konsultasi() {
                   selectedPayment === 'BCA' ? 'border-blue-500' : 'border-gray-200'
                 }`}
               >
-                <img src="src\assets\logo\logobca.png" alt="BCA" className="h-8 mx-auto" />
+                <img src={logoBCA} alt="BCA" className="h-8 mx-auto" />
               </motion.button>
 
               <motion.button
@@ -242,7 +247,7 @@ export default function Konsultasi() {
                   selectedPayment === 'Gopay' ? 'border-blue-500' : 'border-gray-200'
                 }`}
               >
-                <img src="src\assets\logo\logo-gopay-vector.png" alt="Gopay" className="h-8 mx-auto" />
+                <img src={logoGopay} alt="Gopay" className="h-8 mx-auto" />
               </motion.button>
             </div>
 
@@ -500,7 +505,7 @@ export default function Konsultasi() {
               >
                 <div className="absolute inset-0">
                   <img
-                    src="src\assets\doctor\dr-Stevanus.png"
+                    src={drstevanus}
                     alt="dr. Stevanus Ingwantoro, Sp.KJ"
                     className="w-full h-full object-cover"
                   />
@@ -539,7 +544,7 @@ export default function Konsultasi() {
               >
                 <div className="absolute inset-0">
                   <img
-                    src="src\assets\doctor\dr-yossy.jpg"
+                    src={dryossy}
                     alt="dr. Yossy Agustanti Indradjaja, Sp.KJ"
                     className="w-full h-full object-cover"
                   />
@@ -575,7 +580,7 @@ export default function Konsultasi() {
             >
               <div className="flex items-center justify-center">
                 <img
-                  src="src\assets\poster.png"
+                  src={poster}
                   alt="Promotional Banner"
                   className="w-full h-48 rounded-lg object-cover"
                 />

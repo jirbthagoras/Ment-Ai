@@ -7,8 +7,8 @@ import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import Home from './pages/home';
 import AiPage from './pages/aipage';
-import Navbar from "@/components/Navbar";
-import Footer from '@/components/Footer';
+import Navbar from "./components/Navbar";
+import Footer from './components/Footer';
 import Login from'./pages/loginregis';
 import Admin from './pages/admin/admin';
 import ComProfile from './pages/complete-profile';
@@ -25,6 +25,7 @@ import TemanDukungan from './pages/komunitas/group/TemanDukungan';
 import { AuthProvider } from './contexts/AuthContext';
 import PostDetail from './pages/komunitas/group/PostDetail';
 import UserChat from './pages/konsultasi/user/UserChat';
+import ArtikelPage from './pages/ArtikelPage';
 
 
 // Protected Route Component
@@ -123,6 +124,7 @@ function App() {
           <Route path="/teman-dukungan" element={<TemanDukungan />} />
           <Route path="/komunitas/post/:postId" element={<PostDetail />} />
           <Route path="/chat/:consultationId" element={<UserChat />} />
+          <Route path="/artikel/:id" element={<ArtikelPage />} />
         </Routes>
         <Footer />
       </Router>

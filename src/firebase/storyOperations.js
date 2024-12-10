@@ -157,12 +157,18 @@ export const toggleLike = async (storyId) => {
     const likedBy = story.likedBy || [];
     const isLiked = likedBy.includes(user.uid);
 
+    // If already liked, don't allow unliking
+    if (isLiked) {
+      throw new Error('You have already liked this story');
+    }
+
+    // Only allow adding a like
     await updateDoc(storyRef, {
-      likedBy: isLiked ? arrayRemove(user.uid) : arrayUnion(user.uid),
-      likes: increment(isLiked ? 1 : 1)
+      likedBy: arrayUnion(user.uid),
+      likes: increment(1)
     });
 
-    return !isLiked;
+    return true; // Return true since we only allow liking
   } catch (error) {
     console.error('Error toggling like:', error);
     throw error;
