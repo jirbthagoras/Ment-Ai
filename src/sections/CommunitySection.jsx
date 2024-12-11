@@ -24,9 +24,9 @@ const CommunitySection = () => {
         </div>
 
         {/* Cards Container */}
-        <div className="flex flex-col sm:flex-row gap-8 lg:gap-12 justify-center items-stretch">
+        <div className="flex flex-col sm:flex-row gap-6 lg:gap-12 justify-center items-stretch px-4">
           {/* Teman Dukungan Card */}
-          <div className="flex flex-col w-full sm:w-1/2 max-w-xl">
+          <div className="flex flex-col w-full sm:w-1/2 max-w-xl mx-auto">
             <div className="group bg-white/10 backdrop-blur-xl p-8 rounded-2xl shadow-xl 
                           border border-white/20 transform transition-all duration-500 
                           hover:scale-[1.02] hover:bg-white/20 flex-1">
@@ -63,7 +63,7 @@ const CommunitySection = () => {
           </div>
 
           {/* Bagikan Cerita Card */}
-          <div className="flex flex-col w-full sm:w-1/2 max-w-xl">
+          <div className="flex flex-col w-full sm:w-1/2 max-w-xl mx-auto">
             <div className="group bg-white/10 backdrop-blur-xl p-8 rounded-2xl shadow-xl 
                           border border-white/20 transform transition-all duration-500 
                           hover:scale-[1.02] hover:bg-white/20 flex-1">

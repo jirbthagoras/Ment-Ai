@@ -11,7 +11,6 @@ import {
 import { doc, setDoc, getDoc } from 'firebase/firestore';
 import PropTypes from 'prop-types';
 
-// Create the context
 const AuthContext = createContext({
   user: null,
   signup: async () => {},
@@ -22,7 +21,7 @@ const AuthContext = createContext({
   getUserData: async () => {},
 });
 
-// Custom hook to use the auth context
+// Kostum hook untuk menggunakan konteks auth
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) {
@@ -31,7 +30,6 @@ export const useAuth = () => {
   return context;
 };
 
-// Provider component
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -40,7 +38,7 @@ export const AuthProvider = ({ children }) => {
   async function signup(email, password, displayName) {
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
     
-    // Update profile with display name
+    // Update profile dengan display name
     await updateProfile(userCredential.user, {
       displayName: displayName,
       photoURL: `https://ui-avatars.com/api/?name=${displayName}&background=random`
