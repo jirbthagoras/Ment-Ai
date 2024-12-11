@@ -12,8 +12,8 @@ import {
   validateBookingData, 
   createBookingData 
 } from '../../services/consultationService'
-import dryossy from '../../assets/doctor/dr-yossy.jpg'
-import drstevanus from '../../assets/doctor/dr-stevanus.png'
+import drchandra from '../../assets/doctor/chandra.png'
+import drveronika from '../../assets/doctor/veronika.png'
 import logoBCA from '../../assets/logo/logobca.png'
 import logoGopay from '../../assets/logo/logo-gopay-vector.png'
 import poster from '../../assets/poster.png'
@@ -36,15 +36,39 @@ export default function Konsultasi() {
 
   // Add this object for doctor schedules
   const doctorSchedules = {
-    'dr. Stevanus Ingwantoro': [
+    'dr. Chandra Sp.Kj': [
+      // Sesi Pagi (Morning Sessions: 08:00 - 12:00)
       { session: 'Sesi Pagi', time: '08:00-09:00' },
-      { session: 'Sesi Pagi', time: '11:00-12:00' },
-      { session: 'Sesi Siang', time: '13:00-14:00' }
+      { session: 'Sesi Pagi', time: '09:15-10:15' },
+      { session: 'Sesi Pagi', time: '10:30-11:30' },
+      { session: 'Sesi Pagi', time: '11:45-12:45' },
+      
+      // Sesi Siang (Afternoon Sessions: 13:00 - 17:00)
+      { session: 'Sesi Siang', time: '13:00-14:00' },
+      { session: 'Sesi Siang', time: '14:15-15:15' },
+      { session: 'Sesi Siang', time: '15:30-16:30' },
+      { session: 'Sesi Siang', time: '16:45-17:45' },
+      
+      // Sesi Malam (Evening Sessions: 18:00 - 21:00)
+      { session: 'Sesi Malam', time: '18:00-19:00' },
+      { session: 'Sesi Malam', time: '19:15-20:15' },
+      { session: 'Sesi Malam', time: '20:30-21:30' }
     ],
-    'dr. Yossy Agustanti': [
-      { session: 'Sesi Pagi', time: '09:00-10:00' },
-      { session: 'Sesi Siang', time: '14:00-15:00' },
-      { session: 'Sesi Siang', time: '15:30-16:30' }
+    'dr. Veronika, Sp.Kj': [
+      // Sesi Pagi (Morning Sessions: 08:00 - 12:00)
+      { session: 'Sesi Pagi', time: '08:30-09:30' },
+      { session: 'Sesi Pagi', time: '09:45-10:45' },
+      { session: 'Sesi Pagi', time: '11:00-12:00' },
+      
+      // Sesi Siang (Afternoon Sessions: 13:00 - 17:00)
+      { session: 'Sesi Siang', time: '13:30-14:30' },
+      { session: 'Sesi Siang', time: '14:45-15:45' },
+      { session: 'Sesi Siang', time: '16:00-17:00' },
+      
+      // Sesi Malam (Evening Sessions: 18:00 - 21:00)
+      { session: 'Sesi Malam', time: '18:30-19:30' },
+      { session: 'Sesi Malam', time: '19:45-20:45' },
+      { session: 'Sesi Malam', time: '21:00-22:00' }
     ]
   };
 
@@ -498,15 +522,15 @@ export default function Konsultasi() {
                   y: -5,
                   transition: { duration: 0.2 }
                 }}
-                onClick={() => setSelectedDoctor('dr. Stevanus Ingwantoro')}
+                onClick={() => setSelectedDoctor('dr. Chandra Sp.Kj')}
                 className={`relative overflow-hidden rounded-[32px] shadow-lg h-[680px] bg-[#1e4287] cursor-pointer ${
-                  selectedDoctor === 'dr. Stevanus Ingwantoro' ? 'border-4 border-blue-500' : ''
+                  selectedDoctor === 'dr. Chandra Sp.Kj' ? 'border-4 border-blue-500' : ''
                 }`}
               >
                 <div className="absolute inset-0">
                   <img
-                    src={drstevanus}
-                    alt="dr. Stevanus Ingwantoro, Sp.KJ"
+                    src={drchandra}
+                    alt="dr. Chandra, Sp.Kj"
                     className="w-full h-full object-cover"
                   />
                   {/* Gradient Overlay */}
@@ -515,9 +539,9 @@ export default function Konsultasi() {
                 
                 {/* Content */}
                 <div className="absolute bottom-0 left-0 right-0 p-8 text-white">
-                  <h3 className="text-2xl font-bold mb-3">dr. Stevanus Ingwantoro, Sp.KJ</h3>
+                  <h3 className="text-2xl font-bold mb-3">dr. Chandra Sp.Kj</h3>
                   <p className="text-sm mb-6 opacity-90">
-                    Salah satu psikiater terbaik di Jakarta adalah dr. Stevanus, seorang psikolog dengan pengalaman lebih dari 20 tahun.
+                    Salah satu psikiater terbaik di Jakarta adalah dr. Chandra Sp.Kj, seorang psikolog dengan pengalaman lebih dari 20 tahun.
                   </p>
                   <button className="w-full bg-white text-[#1e4287] px-12 py-3 rounded-full hover:bg-gray-100 transition-colors text-lg font-semibold">
                     KONSULTASI
@@ -537,15 +561,15 @@ export default function Konsultasi() {
                   y: -5,
                   transition: { duration: 0.2 }
                 }}
-                onClick={() => setSelectedDoctor('dr. Yossy Agustanti')}
+                onClick={() => setSelectedDoctor('dr. Veronika, Sp.Kj')}
                 className={`relative overflow-hidden rounded-[32px] shadow-lg h-[680px] bg-[#1e4287] cursor-pointer ${
-                  selectedDoctor === 'dr. Yossy Agustanti' ? 'border-4 border-blue-500' : ''
+                  selectedDoctor === 'dr. Veronika, Sp.Kj' ? 'border-4 border-blue-500' : ''
                 }`}
               >
                 <div className="absolute inset-0">
                   <img
-                    src={dryossy}
-                    alt="dr. Yossy Agustanti Indradjaja, Sp.KJ"
+                    src={drveronika}
+                    alt="dr. Veronika, Sp.Kj"
                     className="w-full h-full object-cover"
                   />
                   {/* Gradient Overlay */}
@@ -554,9 +578,9 @@ export default function Konsultasi() {
                 
                 {/* Content */}
                 <div className="absolute bottom-0 left-0 right-0 p-8 text-white">
-                  <h3 className="text-2xl font-bold mb-3">dr. Yossy Agustanti Indradjaja, Sp.KJ</h3>
+                  <h3 className="text-2xl font-bold mb-3">dr. Veronika, Sp.Kj</h3>
                   <p className="text-sm mb-6 opacity-90">
-                    dr. Yossy adalah seorang psikiater di Jakarta yang juga merupakan anggota aktif dalam mengatasi stigma terkait kesehatan mental.
+                   dr. Veronika, Sp.Kj adalah seorang psikiater di Jakarta yang juga merupakan anggota aktif dalam mengatasi stigma terkait kesehatan mental.
                   </p>
                   <button className="w-full bg-white text-[#1e4287] px-12 py-3 rounded-full hover:bg-gray-100 transition-colors text-lg font-semibold">
                     KONSULTASI

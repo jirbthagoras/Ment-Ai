@@ -417,15 +417,16 @@ const ConsultationInfo = () => (
       <div className="bg-blue-50 p-4 rounded-lg">
         <h4 className="font-medium text-blue-900 mb-2">Dokter yang Tersedia</h4>
         <ul className="text-sm text-blue-600 space-y-2">
-          <li>dr. Stevanus Ingwantoro</li>
-          <li>dr. Yossy Agustanti</li>
+          <li>dr. Chandra Sp.Kj</li>
+          <li>dr. Veronika, Sp.Kj</li>
         </ul>
       </div>
       <div className="bg-green-50 p-4 rounded-lg">
         <h4 className="font-medium text-green-900 mb-2">Waktu Sesi</h4>
         <div className="text-sm text-green-600">
-          <p>Pagi: 08:00 - 12:00</p>
-          <p>Siang: 13:00 - 17:00</p>
+          <p>Pagi: 08:00 - 12:45</p>
+          <p>Siang: 13:00 - 17:45</p>
+          <p>Malam: 18:00 - 22:00</p>
         </div>
       </div>
       <div className="bg-purple-50 p-4 rounded-lg">

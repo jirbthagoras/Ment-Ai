@@ -13,21 +13,21 @@ const ImageUploader = ({ onImageUrlChange }) => {
     try {
       setUploading(true);
 
-      // Compress the image
+      // Kompres gambar
       const options = {
-        maxSizeMB: 0.7, // Maximum size in MB
-        maxWidthOrHeight: 1920, // Max width or height
+        maxSizeMB: 0.7, // Maksimum ukuran dalam MB
+        maxWidthOrHeight: 1920, // Maksimum lebar atau tinggi
         useWebWorker: true,
       };
       const compressedFile = await imageCompression(file, options);
 
-      // Convert to base64
+      // Konversi ke base64
       const base64 = await convertToBase64(compressedFile);
       
       // Set preview
       setPreviewUrl(base64);
       
-      // Send base64 string to parent component
+      // Kirim string base64 ke komponen induk
       onImageUrlChange(base64);
     } catch (error) {
       console.error('Error processing image:', error);

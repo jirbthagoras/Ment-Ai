@@ -28,7 +28,7 @@ import UserChat from './pages/konsultasi/user/UserChat';
 import ArtikelPage from './pages/ArtikelPage';
 
 
-// Protected Route Component
+
 const AdminRoute = ({ children }) => {
   const [authState, setAuthState] = useState({
     isAdmin: false,

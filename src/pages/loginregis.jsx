@@ -36,12 +36,12 @@ export default function Component() {
 
   const handleGoogleLogin = async () => {
     try {
-      // Configure Google provider
+      // Konfigurasi provider Google
       provider.setCustomParameters({
         prompt: 'select_account'
       });
       
-      // Use signInWithPopup instead of redirect for better UX
+      // Gunakan signInWithPopup daripada redirect untuk UX yang lebih baik
       const result = await signInWithPopup(auth, provider);
       
       if (result?.user) {

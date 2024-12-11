@@ -5,11 +5,13 @@ import ArticleSection from '../sections/ArticleSection';
 
 export default function Home() {
   return (
-    <main>
-      <HeroSection />
-      <ConsultationSection />
-      <CommunitySection />
-      <ArticleSection />
+    <main className="relative">
+      <div className="flex flex-col">
+        <HeroSection />
+        <ConsultationSection />
+        <CommunitySection />
+        <ArticleSection />
+      </div>
     </main>
   );
 }

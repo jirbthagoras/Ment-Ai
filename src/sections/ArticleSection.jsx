@@ -109,20 +109,20 @@ function ArticleSection() {
       
       {/* Responsive grid container */}
       <div className="w-full max-w-[1440px] mx-auto px-4 md:px-6 lg:px-8">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6 md:gap-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 sm:gap-6 md:gap-8 px-4">
           {artikelData.map((artikel, index) => (
             <div key={index} className={`
               flex justify-center
               ${index === 2 ? 'sm:col-span-2 lg:col-span-1' : ''}
               ${index >= 3 ? 'sm:hidden lg:block' : ''}
-              transform transition-all duration-500
-              sm:translate-y-0
+              transform transition-all duration-500 hover:z-10
               ${artikel.style.marginTop !== '0px' ? 
                 `lg:translate-y-[${artikel.style.marginTop.replace('px', '')}px]` : ''}
             `}>
               <ArtikelCard 
                 title={artikel.title} 
                 imageSrc={artikel.imageSrc} 
+                className="w-full max-w-[280px] mx-auto"
               />
             </div>
           ))}

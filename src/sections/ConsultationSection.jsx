@@ -17,8 +17,14 @@ const ConsultationSection = () => {
   };
 
   return (
-    <section className="bg-gradient-to-b from-[#1E498E] to-[#A0A9FF]">
-      <div className="container mx-auto px-4 py-20">
+    <section className="bg-gradient-to-b from-[#1E498E] to-[#A0A9FF] relative">
+      <motion.div
+        initial={{ opacity: 0 }}
+        whileInView={{ opacity: 1 }}
+        transition={{ duration: 0.5 }}
+        viewport={{ once: true, margin: "-100px" }}
+        className="container mx-auto px-4 py-20"
+      >
         <div className="flex flex-col gap-16">
           {/* Psychiatrist Card */}
           <div className="flex flex-col md:flex-row items-center">
@@ -126,7 +132,7 @@ const ConsultationSection = () => {
             </div>
           </div>
         </div>
-      </div>
+      </motion.div>
 
       {/* Modal for Consultation */}
       {isModalOpen && (
