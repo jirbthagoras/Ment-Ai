@@ -14,7 +14,6 @@ import { getFirestore, getDoc, doc } from 'firebase/firestore';
 import { isToday, isTomorrow } from 'date-fns';
 import PropTypes from 'prop-types';
 
-// Add bell animation configuration
 const bellAnimation = {
   whileHover: { 
     rotate: [0, 15, -15, 0],
@@ -75,7 +74,18 @@ const EnhancedAppointmentCard = ({ appointment, handleChatAction }) => {
       cancelled: 'bg-red-100 text-red-800 border-red-300',
       'in-progress': 'bg-blue-100 text-blue-800 border-blue-300'
     };
-    return `${statusStyles[status]} px-3 py-1 rounded-full text-sm font-medium border`;
+    
+    const statusTranslations = {
+      pending: 'Menunggu',
+      completed: 'Selesai',
+      cancelled: 'Dibatalkan',
+      'in-progress': 'Sedang Berlangsung'
+    };
+
+    return {
+      className: `${statusStyles[status]} px-3 py-1 rounded-full text-sm font-medium border`,
+      text: statusTranslations[status]
+    };
   };
 
   const getTimeRemaining = (appointmentDate, appointmentTime) => {
@@ -89,20 +99,20 @@ const EnhancedAppointmentCard = ({ appointment, handleChatAction }) => {
 
     if (now >= appointment && now < endTime) {
       const remainingMins = Math.floor((endTime - now) / (1000 * 60));
-      return `${remainingMins} minutes remaining`;
+      return `${remainingMins} menit tersisa`;
     }
 
     const diff = appointment - now;
-    if (diff < 0) return 'Session ended';
+    if (diff < 0) return 'Sesi berakhir';
     
     const days = Math.floor(diff / (1000 * 60 * 60 * 24));
     const hrs = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
     const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
 
-    if (days > 0) return `Starts in ${days} days`;
-    if (hrs > 0) return `Starts in ${hrs} hours`;
-    if (mins > 0) return `Starts in ${mins} minutes`;
-    return 'Starting now';
+    if (days > 0) return `Dimulai dalam ${days} hari`;
+    if (hrs > 0) return `Dimulai dalam ${hrs} jam`;
+    if (mins > 0) return `Dimulai dalam ${mins} menit`;
+    return 'Akan segera dimulai';
   };
 
   return (
@@ -131,8 +141,8 @@ const EnhancedAppointmentCard = ({ appointment, handleChatAction }) => {
                   <span className="px-1.5 py-0.5 bg-blue-100 text-blue-700 rounded text-[10px] xs:text-xs font-medium">
                     ID: #{appointment.id?.slice(0, 6)}
                   </span>
-                  <span className={`${getStatusBadge(appointment.status)} px-1.5 py-0.5 text-[10px] xs:text-xs`}>
-                    {appointment.status.charAt(0).toUpperCase() + appointment.status.slice(1)}
+                  <span className={`${getStatusBadge(appointment.status).className} px-1.5 py-0.5 text-[10px] xs:text-xs`}>
+                    {getStatusBadge(appointment.status).text}
                   </span>
                 </div>
               </div>
@@ -169,7 +179,7 @@ const EnhancedAppointmentCard = ({ appointment, handleChatAction }) => {
               onClick={() => handleChatAction(appointment)}
               className="w-full xs:w-auto px-3 py-1.5 xs:py-2 bg-blue-600 text-white rounded-lg flex items-center justify-center gap-1.5 hover:bg-blue-700 transition-all duration-200 shadow-md text-xs xs:text-sm"
             >
-              Enter Room
+              Masuk Ruangan
               <FaArrowRight className="text-xs xs:text-sm" />
             </motion.button>
           </div>
@@ -183,7 +193,7 @@ const EnhancedAppointmentCard = ({ appointment, handleChatAction }) => {
           <div className="bg-gray-50 rounded-lg xs:rounded-xl p-2.5 xs:p-4">
             <div className="flex items-center gap-1.5 text-gray-600 mb-1">
               <FaStethoscope className="text-blue-500 text-xs xs:text-sm" />
-              <span className="text-[11px] xs:text-sm font-medium">Session Type</span>
+              <span className="text-[11px] xs:text-sm font-medium">Jenis Sesi</span>
             </div>
             <p className="text-gray-800 font-medium text-xs xs:text-sm">
               {appointment.sessionType || 'Regular Consultation'}
@@ -192,14 +202,14 @@ const EnhancedAppointmentCard = ({ appointment, handleChatAction }) => {
           <div className="bg-gray-50 rounded-lg xs:rounded-xl p-2.5 xs:p-4">
             <div className="flex items-center gap-1.5 text-gray-600 mb-1">
               <FaClock className="text-blue-500 text-xs xs:text-sm" />
-              <span className="text-[11px] xs:text-sm font-medium">Duration</span>
+              <span className="text-[11px] xs:text-sm font-medium">Durasi</span>
             </div>
             <p className="text-gray-800 font-medium text-xs xs:text-sm">60 minutes</p>
           </div>
           <div className="bg-gray-50 rounded-lg xs:rounded-xl p-2.5 xs:p-4">
             <div className="flex items-center gap-1.5 text-gray-600 mb-1">
               <FaUserMd className="text-blue-500 text-xs xs:text-sm" />
-              <span className="text-[11px] xs:text-sm font-medium">Doctor</span>
+              <span className="text-[11px] xs:text-sm font-medium">Dokter</span>
             </div>
             <p className="text-gray-800 font-medium text-xs xs:text-sm">
               {appointment.doctor || 'Dr. Assigned'}
@@ -211,11 +221,11 @@ const EnhancedAppointmentCard = ({ appointment, handleChatAction }) => {
         <div className="mb-3 xs:mb-4">
           <h4 className="text-[11px] xs:text-sm font-semibold text-gray-700 mb-1.5 xs:mb-3 flex items-center gap-1.5">
             <FaClipboardList className="text-blue-500 text-xs xs:text-sm" />
-            Consultation Notes
+            Catatan Konsultasi
           </h4>
           <div className="bg-gray-50 rounded-lg xs:rounded-xl p-2.5 xs:p-4">
             <p className="text-[11px] xs:text-sm text-gray-600 leading-relaxed">
-              {appointment.notes || 'No consultation notes available'}
+              {appointment.notes || 'Belum ada catatan konsultasi'}
             </p>
           </div>
         </div>
@@ -229,12 +239,12 @@ const EnhancedAppointmentCard = ({ appointment, handleChatAction }) => {
             {isExpanded ? (
               <>
                 <FaChevronUp className="text-blue-500" />
-                Show less details
+                Sembunyikan detail
               </>
             ) : (
               <>
                 <FaChevronDown className="text-blue-500" />
-                Show more details
+                Tampilkan detail
               </>
             )}
           </button>
@@ -251,25 +261,25 @@ const EnhancedAppointmentCard = ({ appointment, handleChatAction }) => {
                 {/* Patient Information */}
                 <div className="bg-gray-50 rounded-lg xs:rounded-xl p-2.5 xs:p-4">
                   <h5 className="text-[11px] xs:text-sm font-semibold text-gray-700 mb-2 xs:mb-3">
-                    Patient Information
+                    Informasi Pasien
                   </h5>
                   <div className="grid grid-cols-1 xs:grid-cols-2 gap-2.5 xs:gap-4">
                     <div>
                       <p className="text-[11px] xs:text-sm text-gray-600">
-                        <span className="font-medium">Email:</span><br />
-                        {appointment.email || 'Not provided'}
+                        <span className="font-medium">Surel:</span><br />
+                        {appointment.email || 'Tidak tersedia'}
                       </p>
                     </div>
                     <div>
                       <p className="text-[11px] xs:text-sm text-gray-600">
-                        <span className="font-medium">Phone:</span><br />
-                        {appointment.phone || 'Not provided'}
+                        <span className="font-medium">Telepon:</span><br />
+                        {appointment.phone || 'Tidak tersedia'}
                       </p>
                     </div>
                     <div>
                       <p className="text-[11px] xs:text-sm text-gray-600">
-                        <span className="font-medium">Age:</span><br />
-                        {appointment.age || 'Not provided'}
+                        <span className="font-medium">Usia:</span><br />
+                        {appointment.age || 'Tidak tersedia'}
                       </p>
                     </div>
                   </div>
@@ -277,33 +287,33 @@ const EnhancedAppointmentCard = ({ appointment, handleChatAction }) => {
 
                 {/* Medical History */}
                 <div className="bg-gray-50 rounded-lg xs:rounded-xl p-2.5 xs:p-4">
-                  <h5 className="text-[11px] xs:text-sm font-semibold text-gray-700 mb-2 xs:mb-3">Medical History</h5>
+                  <h5 className="text-[11px] xs:text-sm font-semibold text-gray-700 mb-2 xs:mb-3">Riwayat Medis</h5>
                   <div className="space-y-2">
                     <p className="text-[11px] xs:text-sm text-gray-600">
-                      <span className="font-medium">Previous Conditions:</span><br />
-                      {appointment.medicalHistory?.conditions || 'No previous conditions recorded'}
+                      <span className="font-medium">Kondisi Sebelumnya:</span><br />
+                      {appointment.medicalHistory?.conditions || 'Tidak ada kondisi sebelumnya'}
                     </p>
                     <p className="text-[11px] xs:text-sm text-gray-600">
-                      <span className="font-medium">Allergies:</span><br />
-                      {appointment.medicalHistory?.allergies || 'No allergies recorded'}
+                      <span className="font-medium">Alergi:</span><br />
+                      {appointment.medicalHistory?.allergies || 'Tidak ada alergi tercatat'}
                     </p>
                     <p className="text-[11px] xs:text-sm text-gray-600">
-                      <span className="font-medium">Current Medications:</span><br />
-                      {appointment.medicalHistory?.medications || 'No current medications'}
+                      <span className="font-medium">Obat-obatan Saat Ini:</span><br />
+                      {appointment.medicalHistory?.medications || 'Tidak ada obat-obatan'}
                     </p>
                   </div>
                 </div>
 
                 {/* Appointment History */}
                 <div className="bg-gray-50 rounded-lg xs:rounded-xl p-2.5 xs:p-4">
-                  <h5 className="text-[11px] xs:text-sm font-semibold text-gray-700 mb-2 xs:mb-3">Appointment History</h5>
+                  <h5 className="text-[11px] xs:text-sm font-semibold text-gray-700 mb-2 xs:mb-3">Riwayat Kunjungan</h5>
                   <div className="space-y-2">
                     <p className="text-[11px] xs:text-sm text-gray-600">
-                      <span className="font-medium">Previous Visits:</span> {appointment.visitCount || '0'}
+                      <span className="font-medium">Kunjungan Sebelumnya:</span> {appointment.visitCount || '0'}
                     </p>
                     <p className="text-[11px] xs:text-sm text-gray-600">
-                      <span className="font-medium">Last Visit:</span><br />
-                      {appointment.lastVisit || 'First visit'}
+                      <span className="font-medium">Kunjungan Terakhir:</span><br />
+                      {appointment.lastVisit || 'Kunjungan pertama'}
                     </p>
                   </div>
                 </div>
@@ -316,7 +326,6 @@ const EnhancedAppointmentCard = ({ appointment, handleChatAction }) => {
   );
 };
 
-// Update PropTypes to include new fields
 EnhancedAppointmentCard.propTypes = {
   appointment: PropTypes.shape({
     id: PropTypes.string.isRequired,
@@ -416,22 +425,15 @@ const NextAppointmentCard = ({ appointments, handleChatAction }) => {
   };
 
   return (
-    <motion.div
-      className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-6 shadow-lg mt-4 border border-blue-200"
-      whileHover={{ 
-        scale: 1.02,
-        boxShadow: "0 10px 25px rgba(0,0,0,0.1)"
-      }}
-      transition={{ type: "spring", stiffness: 300 }}
-    >
+    <motion.div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-6 shadow-lg mt-4 border border-blue-200">
       <div className="flex items-start justify-between">
         <div className="flex items-center gap-3">
           <div className="p-3 bg-blue-500 rounded-lg">
             <FaStethoscope className="text-2xl text-white" />
           </div>
           <div className="text-left">
-            <h3 className="text-sm font-medium text-blue-900">Next Appointment</h3>
-            <p className="text-xs text-blue-600 mt-1">Upcoming consultation</p>
+            <h3 className="text-sm font-medium text-blue-900">Janji Temu Berikutnya</h3>
+            <p className="text-xs text-blue-600 mt-1">Konsultasi mendatang</p>
           </div>
         </div>
         {nextAppointment && (
@@ -441,7 +443,7 @@ const NextAppointmentCard = ({ appointments, handleChatAction }) => {
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
           >
-            Enter Room
+            Masuk Ruangan
             <FaArrowRight />
           </motion.button>
         )}
@@ -477,19 +479,19 @@ const NextAppointmentCard = ({ appointments, handleChatAction }) => {
           <div className="bg-white/50 rounded-lg p-4 mb-4">
             <div className="flex items-center gap-2 text-gray-700 mb-2">
               <FaUserMd className="text-blue-500" />
-              <span className="font-medium">Consultation Details</span>
+              <span className="font-medium">Detail Konsultasi</span>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <p className="text-sm text-gray-600">Doctor</p>
+                <p className="text-sm text-gray-600">Dokter</p>
                 <p className="font-medium text-gray-800">
-                  {nextAppointment.doctor || 'Dr. Assigned'}
+                  {nextAppointment.doctor || 'Dokter Ditugaskan'}
                 </p>
               </div>
               <div>
-                <p className="text-sm text-gray-600">Consultation Type</p>
+                <p className="text-sm text-gray-600">Jenis Konsultasi</p>
                 <p className="font-medium text-gray-800">
-                  {nextAppointment.consultationType || 'General Checkup'}
+                  {nextAppointment.consultationType || 'Pemeriksaan Umum'}
                 </p>
               </div>
             </div>
@@ -543,8 +545,8 @@ const NextAppointmentCard = ({ appointments, handleChatAction }) => {
       ) : (
         <div className="mt-4 text-center py-8 bg-white/50 rounded-lg">
           <FaCalendarAlt className="text-blue-300 text-4xl mx-auto mb-3" />
-          <p className="text-gray-700 font-medium">No upcoming appointments</p>
-          <p className="text-sm text-gray-500 mt-1">Your schedule is clear for now</p>
+          <p className="text-gray-700 font-medium">Tidak ada janji temu mendatang</p>
+          <p className="text-sm text-gray-500 mt-1">Jadwal Anda kosong untuk saat ini</p>
         </div>
       )}
     </motion.div>
@@ -591,85 +593,65 @@ const formatCurrency = (amount) => {
   }).format(amount);
 };
 
-// Update the Total Earnings Card component
+
 const TotalEarningsCard = ({ appointments, completedConsultations }) => {
-  const MONTHLY_TARGET = 1000000; // Rp 1,000,000
+  const MONTHLY_TARGET = 1000000; 
   const monthlyEarnings = calculateMonthlyEarnings(appointments);
   const progressPercentage = Math.min(Math.round((monthlyEarnings / MONTHLY_TARGET) * 100), 100);
   
   const currentMonthName = new Date().toLocaleDateString('id-ID', { month: 'long' });
 
   return (
-    <motion.div
-      className="bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-xl p-6 shadow-lg mt-4 border border-emerald-200"
-      whileHover={{ 
-        scale: 1.02,
-        boxShadow: "0 10px 25px rgba(0,0,0,0.1)"
-      }}
-      transition={{ type: "spring", stiffness: 300 }}
-    >
+    <motion.div className="bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-xl p-6 shadow-lg mt-4 border border-emerald-200">
       <div className="flex items-start justify-between">
         <div className="flex items-center gap-3">
           <div className="p-3 bg-emerald-500 rounded-lg">
             <FaChartLine className="text-2xl text-white" />
           </div>
           <div className="text-left">
-            <h3 className="text-sm font-medium text-emerald-900">Total Earnings</h3>
+            <h3 className="text-sm font-medium text-emerald-900">Total Pendapatan</h3>
             <p className="text-xs text-emerald-600 mt-1">{currentMonthName}</p>
           </div>
         </div>
       </div>
 
       <div className="mt-4 sm:mt-6 grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-        {/* Monthly Revenue Card */}
         <div className="bg-white/50 rounded-lg p-3 sm:p-4">
           <div className="flex items-center gap-2 text-emerald-600 mb-2">
             <FaMoneyBillWave className="text-base sm:text-lg" />
-            <span className="text-xs sm:text-sm font-medium">Monthly Revenue</span>
+            <span className="text-xs sm:text-sm font-medium">Pendapatan Bulanan</span>
           </div>
-          <motion.h4 
-            className="text-xl sm:text-2xl font-bold text-gray-800 break-words"
-            initial={{ scale: 0.5, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ duration: 0.5 }}
-          >
+          <motion.h4 className="text-xl sm:text-2xl font-bold text-gray-800 break-words">
             {formatCurrency(monthlyEarnings)}
           </motion.h4>
           <p className="text-[10px] sm:text-xs text-emerald-600 mt-1 sm:mt-2">
-            From {appointments.filter(app => {
+            Dari {appointments.filter(app => {
               const appDate = new Date(app.date);
               return appDate.getMonth() === new Date().getMonth();
-            }).length} consultations
+            }).length} konsultasi
           </p>
         </div>
 
-        {/* Success Rate Card */}
         <div className="bg-white/50 rounded-lg p-3 sm:p-4">
           <div className="flex items-center gap-2 text-emerald-600 mb-2">
             <FaUserMd className="text-base sm:text-lg" />
-            <span className="text-xs sm:text-sm font-medium">Success Rate</span>
+            <span className="text-xs sm:text-sm font-medium">Tingkat Keberhasilan</span>
           </div>
-          <motion.h4 
-            className="text-xl sm:text-2xl font-bold text-gray-800"
-            initial={{ scale: 0.5, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ duration: 0.5 }}
-          >
+          <motion.h4 className="text-xl sm:text-2xl font-bold text-gray-800">
             {appointments.length > 0 
               ? Math.round((completedConsultations / appointments.length) * 100)
               : 0}%
           </motion.h4>
           <p className="text-[10px] sm:text-xs text-emerald-600 mt-1 sm:mt-2">
-            {completedConsultations} completed
+            {completedConsultations} selesai
           </p>
         </div>
       </div>
 
-      {/* Monthly Progress Bar */}
       <div className="mt-4 sm:mt-6">
         <div className="flex flex-col xs:flex-row justify-between text-xs sm:text-sm mb-2 gap-1">
           <span className="text-gray-600 break-words">
-            Monthly Target ({formatCurrency(MONTHLY_TARGET)})
+            Target Bulanan ({formatCurrency(MONTHLY_TARGET)})
           </span>
           <span className="text-emerald-600 font-medium">
             {progressPercentage}%
@@ -684,14 +666,14 @@ const TotalEarningsCard = ({ appointments, completedConsultations }) => {
           />
         </div>
         <p className="text-[10px] sm:text-xs text-emerald-600 mt-1 sm:mt-2 text-right break-words">
-          {formatCurrency(MONTHLY_TARGET - monthlyEarnings)} remaining to reach target
+          {formatCurrency(MONTHLY_TARGET - monthlyEarnings)} lagi untuk mencapai target
         </p>
       </div>
     </motion.div>
   );
 };
 
-// Add PropTypes
+
 TotalEarningsCard.propTypes = {
   appointments: PropTypes.arrayOf(PropTypes.shape({
     date: PropTypes.string.isRequired,
@@ -922,18 +904,18 @@ export default function Admin() {
           <div className="flex flex-wrap items-center justify-between mb-8 gap-4">
             <div>
               <h2 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                Upcoming Schedule
+                Jadwal Mendatang
               </h2>
-              <p className="text-gray-500 mt-1">Manage your appointments and consultations</p>
+              <p className="text-gray-500 mt-1">Kelola janji temu dan konsultasi Anda</p>
             </div>
             <div className="flex gap-4">
               <div className="bg-blue-50 rounded-xl p-3 text-center min-w-[100px]">
                 <div className="text-2xl font-bold text-blue-600">{patientCount}</div>
-                <div className="text-xs text-gray-600">Today&apos;s Patients</div>
+                <div className="text-xs text-gray-600">Pasien Hari Ini</div>
               </div>
               <div className="bg-purple-50 rounded-xl p-3 text-center min-w-[100px]">
                 <div className="text-2xl font-bold text-purple-600">{appointments.length}</div>
-                <div className="text-xs text-gray-600">Total Scheduled</div>
+                <div className="text-xs text-gray-600">Total Terjadwal</div>
               </div>
             </div>
           </div>
@@ -947,7 +929,7 @@ export default function Admin() {
                 </div>
                 <input
                   type="text"
-                  placeholder="Search patients, appointments, or IDs..."
+                  placeholder="Cari pasien, janji temu, atau ID..."
                   className="w-full pl-11 pr-4 py-3 rounded-xl bg-white border-2 border-gray-100 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200 text-gray-600"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
@@ -964,7 +946,7 @@ export default function Admin() {
                       : 'bg-white text-gray-700 hover:bg-gray-50'}`}
                 >
                   <FaFilter className={isFiltering ? 'text-white' : 'text-gray-400'} />
-                  <span>Filter</span>
+                  <span>Saring</span>
                 </motion.button>
                 
                 {/* Quick Filter Buttons */}
@@ -974,7 +956,7 @@ export default function Admin() {
                   className="px-4 py-3 rounded-xl bg-white text-gray-700 hover:bg-gray-50 font-medium transition-all duration-200"
                   onClick={() => setFilterStatus('today')}
                 >
-                  Today
+                  Hari Ini
                 </motion.button>
                 <motion.button
                   whileHover={{ scale: 1.02 }}
@@ -982,7 +964,7 @@ export default function Admin() {
                   className="px-4 py-3 rounded-xl bg-white text-gray-700 hover:bg-gray-50 font-medium transition-all duration-200"
                   onClick={() => setFilterStatus('upcoming')}
                 >
-                  Upcoming
+                  Mendatang
                 </motion.button>
               </div>
             </div>
@@ -1029,7 +1011,7 @@ export default function Admin() {
 
                     {/* Date Range Filter */}
                     <div className="space-y-2">
-                      <h3 className="text-sm font-medium text-gray-700">Date Range</h3>
+                      <h3 className="text-sm font-medium text-gray-700">Rentang Tanggal</h3>
                       <div className="flex gap-2">
                         <input
                           type="date"
@@ -1066,12 +1048,12 @@ export default function Admin() {
                     <FaCalendarAlt className="text-4xl text-gray-400" />
                   </div>
                   <h3 className="text-xl font-semibold text-gray-700 mb-2">
-                    {searchTerm ? 'No matching appointments' : 'No appointments scheduled'}
+                    {searchTerm ? 'Tidak ada janji temu yang cocok' : 'Belum ada janji temu'}
                   </h3>
                   <p className="text-gray-500 text-center max-w-md">
                     {searchTerm 
-                      ? 'Try adjusting your search terms or filters'
-                      : 'When new appointments are scheduled, they&apos;ll appear here'
+                      ? 'Coba sesuaikan kata kunci pencarian atau filter'
+                      : 'Ketika ada janji temu baru, akan muncul di sini'
                     }
                   </p>
                 </motion.div>
@@ -1090,7 +1072,11 @@ export default function Admin() {
 
                     return (
                       <div key={section}>
-                        <h3 className="text-lg font-semibold text-gray-700 mb-4">{section}</h3>
+                        <h3 className="text-lg font-semibold text-gray-700 mb-4">
+                          {section === 'Today' ? 'Hari Ini' : 
+                           section === 'Tomorrow' ? 'Besok' : 
+                           'Mendatang'}
+                        </h3>
                         <div className="space-y-4">
                           {sectionAppointments.map((appointment, index) => (
                             <EnhancedAppointmentCard
@@ -1129,7 +1115,7 @@ export default function Admin() {
             >
               <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2 mb-4">
                 <FaComments className="text-blue-600" />
-                New Message!
+                Pesan Baru!
               </h3>
               <div className="space-y-4 max-h-[200px] pr-2">
                 {renderMessages(messages)}
@@ -1163,7 +1149,7 @@ export default function Admin() {
                 }}
                 transition={{ type: "spring", stiffness: 300 }}
               >
-                <div className="text-sm font-medium text-blue-900">Selesai Konsultasi</div>
+                <div className="text-sm font-medium text-blue-900">Konsultasi Selesai</div>
                 <motion.div
                   className="text-4xl font-bold text-blue-700 mt-2"
                   initial={{ scale: 0.5 }}
@@ -1202,8 +1188,8 @@ export default function Admin() {
                     <FaHospital className="text-2xl text-white" />
                   </div>
                   <div className="text-left">
-                    <h3 className="text-sm font-medium text-purple-900">Performance Analytics</h3>
-                    <p className="text-xs text-purple-600 mt-1">Daily overview</p>
+                    <h3 className="text-sm font-medium text-purple-900">Analisis Kinerja</h3>
+                    <p className="text-xs text-purple-600 mt-1">Ringkasan harian</p>
                   </div>
                 </div>
               </div>
@@ -1212,18 +1198,18 @@ export default function Admin() {
                 <div className="bg-white/50 rounded-lg p-4">
                   <div className="flex items-center gap-2 text-purple-600 mb-2">
                     <FaUser />
-                    <span className="text-sm font-medium">New Patients</span>
+                    <span className="text-sm font-medium">Pasien Baru</span>
                   </div>
                   <h4 className="text-2xl font-bold text-gray-800">
                     {patientCount}
                   </h4>
-                  <p className="text-xs text-purple-600 mt-2">Today</p>
+                  <p className="text-xs text-purple-600 mt-2">Hari Ini</p>
                 </div>
 
                 <div className="bg-white/50 rounded-lg p-4">
                   <div className="flex items-center gap-2 text-purple-600 mb-2">
                     <FaCalendarAlt />
-                    <span className="text-sm font-medium">Appointments</span>
+                    <span className="text-sm font-medium">Janji Temu</span>
                   </div>
                   <h4 className="text-2xl font-bold text-gray-800">
                     {appointments.length}
@@ -1234,12 +1220,12 @@ export default function Admin() {
                 <div className="bg-white/50 rounded-lg p-4">
                   <div className="flex items-center gap-2 text-purple-600 mb-2">
                     <FaComments />
-                    <span className="text-sm font-medium">Messages</span>
+                    <span className="text-sm font-medium">Pesan</span>
                   </div>
                   <h4 className="text-2xl font-bold text-gray-800">
                     {messages.length}
                   </h4>
-                  <p className="text-xs text-purple-600 mt-2">Unread</p>
+                  <p className="text-xs text-purple-600 mt-2">Belum Dibaca</p>
                 </div>
               </div>
             </motion.div>

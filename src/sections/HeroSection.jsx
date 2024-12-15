@@ -124,11 +124,11 @@ export default function HeroSection() {
   };
 
   return (
-    <section className="h-screen bg-gradient-to-b from-[#FFA7D0] to-[#1E498E] relative">
-      <motion.div className="relative h-screen">
-        <div className="h-full max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8">
+    <section className="min-h-screen bg-gradient-to-b from-[#FFA7D0] to-[#1E498E] relative">
+      <motion.div className="relative">
+        <div className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
-            className="relative min-h-screen w-full"
+            className="relative w-full pb-24"
             variants={containerVariants}
             initial="hidden"
             animate="visible"
@@ -269,11 +269,11 @@ export default function HeroSection() {
                 {selectedCondition && (
                   <motion.div
                     key={selectedCondition}
-                    initial={{ opacity: 0, y: 30 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -30 }}
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    exit={{ opacity: 0, height: 0 }}
                     transition={{ type: "spring", stiffness: 200, damping: 20 }}
-                    className="mb-16"
+                    className="mb-32"
                   >
                     <motion.h2
                       initial={{ opacity: 0, x: -50 }}

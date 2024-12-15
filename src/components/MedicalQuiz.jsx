@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { FaArrowRight, FaArrowLeft } from 'react-icons/fa';
 import { FiCheck } from 'react-icons/fi';
 
-// Animation variants
+// Variasi animasi untuk kontainer
 const containerVariants = {
   hidden: { opacity: 0 },
   visible: { 
@@ -69,7 +69,7 @@ const optionVariants = {
 
 const MedicalQuiz = ({ medicalInfo, onChange }) => {
   const [currentQuestion, setCurrentQuestion] = useState(0);
-  const [direction, setDirection] = useState(0); // -1 for prev, 1 for next
+  const [direction, setDirection] = useState(0); // -1 untuk prev, 1 untuk next
 
   const questions = [
     {
@@ -322,7 +322,7 @@ const MedicalQuiz = ({ medicalInfo, onChange }) => {
   );
 };
 
-// Add PropTypes validation
+// Menambahkan PropTypes validation
 MedicalQuiz.propTypes = {
   medicalInfo: PropTypes.object.isRequired,
   onChange: PropTypes.func.isRequired

@@ -27,7 +27,6 @@ const Footer = () => {
     }
   };
 
-  // Social media data
   const socialMedia = [
     {
       name: 'Instagram',
