@@ -32,7 +32,7 @@ const Diagnose = () => {
           },
           { role: "user",
             content: `
-            ${complaint} make a diagnose and turn it to 5 question with right answer text format like this, and i will not tolerate any response except this: [{"no": 1,"question": "What is the capital of France?","options": ["London", "Paris", "Rome", "Berlin"],"answer": "Paris"},{"no": 2,"question": "Who painted the Mona Lisa?","options": ["Leonardo da Vinci", "Pablo Picasso", "Vincent van Gogh", "Michelangelo"],"answer": "Leonardo da Vinci"}] please consistent to format responses is Json or string with bahasa indonesia, because your i will turn your response to JSON format and i do not tolerate any word except the format because it will make an error`
+            ${complaint} make a diagnose and turn it to 5 (five) question with right answer text format like this, and i will not tolerate any response except this: [{"no": 1,"question": "What is the capital of France?","options": ["London", "Paris", "Rome", "Berlin"],"answer": "Paris"},{"no": 2,"question": "Who painted the Mona Lisa?","options": ["Leonardo da Vinci", "Pablo Picasso", "Vincent van Gogh", "Michelangelo"],"answer": "Leonardo da Vinci"}] please consistent to format responses is Json or string with bahasa indonesia, because your i will turn your response to JSON format and i do not tolerate any word except the format because it will make an error`
           },
         ],
         model: "llama3-8b-8192",
@@ -89,6 +89,7 @@ const Diagnose = () => {
   };
 
   // Fungsi untuk mengirim jawaban ke Groq AI untuk diagnosa
+  // Fungsi untuk mengirim jawaban ke Groq AI untuk diagnosa
   const handleSubmitAnswers = async () => {
     setLoading(true);
 
@@ -98,14 +99,18 @@ const Diagnose = () => {
           {
             role: "system",
             content:
-              "Bayangkan dirimu adalah seorang dokter psikiater yang bijaksana berwujud seekor burung hantu bernama Dr. Men. Berdasarkan jawaban berikut, berikan kesimpulan diagnosa secara sopan dan mendalam.",
+              "Bayangkan dirimu adalah seorang dokter psikiater yang bijaksana berwujud seekor burung hantu bernama Dr. Men. Kau sangat peduli dan memberikan diagnosa berdasarkan jawaban-jawaban berikut. Berikan diagnosa yang sopan, jelas, dan penuh perhatian.",
           },
-          { role: "user", content: JSON.stringify(answers) },
+          {
+            role: "user",
+            content: `Jawaban pasien: ${JSON.stringify(answers)}`,
+          },
         ],
         model: "llama3-8b-8192",
       });
 
-      setResult(response.content); // Ambil hasil diagnosa
+      // Simpan hasil diagnosa
+      setResult(response.choices[0]?.message?.content || "Diagnosa tidak tersedia.");
     } catch (error) {
       console.error("Error fetching diagnosis:", error);
       alert("Terjadi kesalahan saat mengambil hasil diagnosa.");
@@ -113,6 +118,7 @@ const Diagnose = () => {
 
     setLoading(false);
   };
+
 
   return (
     <div className="min-h-screen bg-gray-100 p-6 flex flex-col items-center">
