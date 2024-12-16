@@ -121,7 +121,7 @@ const Diagnose = () => {
 
 
   return (
-    <div className="min-h-screen bg-gray-100 p-6 flex flex-col items-center">
+    <div className="mt-12 min-h-screen p-6 flex flex-col items-center justify-center">
       <h1 className="text-2xl font-bold mb-4">AI untuk Kesehatan Mental</h1>
 
       {!questions.length && !result && (
@@ -177,9 +177,9 @@ const Diagnose = () => {
       )}
 
       {result && (
-        <div className="w-full max-w-md text-center">
+        <div className="w-fit md:w-[900px] mt-6 text-center">
           <h2 className="text-xl font-bold mb-4">Hasil Diagnosa</h2>
-          <p>{result}</p>
+          <p className="text-lg text-justify">{result}</p>
           <button
             onClick={() => {
               setComplaint("");
