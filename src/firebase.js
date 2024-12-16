@@ -1,21 +1,29 @@
 
 import { initializeApp } from "firebase/app";
-import { getAuth } from "firebase/auth"; 
-import { getFirestore } from "firebase/firestore"; 
-import { getDatabase } from "firebase/database"; 
+import { getAuth } from "firebase/auth";
+import { getFirestore } from "firebase/firestore";
+import { getDatabase } from "firebase/database";
 import { getDoc, doc } from 'firebase/firestore';
-import { 
-  collection, 
-  addDoc, 
-  getDocs, 
-  deleteDoc, 
-  updateDoc, 
-  query, 
-  where, 
-  orderBy 
+import {
+  collection,
+  addDoc,
+  getDocs,
+  deleteDoc,
+  updateDoc,
+  query,
+  where,
+  orderBy
 } from 'firebase/firestore';
 
-
+const firebaseConfig = {
+  apiKey: "AIzaSyCJ1L6mZQrBO3G4_Q8f3p_fHR7geA_aViQ",
+  authDomain: "menai-e7169.firebaseapp.com",
+  projectId: "menai-e7169",
+  storageBucket: "menai-e7169.firebasestorage.app",
+  messagingSenderId: "97767797559",
+  appId: "1:97767797559:web:586109dab31caf8703a0b2",
+  measurementId: "G-7RL736E815"
+};
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
@@ -75,12 +83,12 @@ export const createPost = async (postData) => {
 export const getPosts = async (category = 'all', sortType = 'newest') => {
   try {
     let q = collection(db, 'posts');
-    
+
     // Apply category filter if not 'all'
     if (category !== 'all') {
       q = query(q, where('category', '==', category));
     }
-    
+
     // Apply sorting
     switch (sortType) {
       case 'popular':
@@ -92,7 +100,7 @@ export const getPosts = async (category = 'all', sortType = 'newest') => {
       default: // 'newest'
         q = query(q, orderBy('timestamp', 'desc'));
     }
-    
+
     const snapshot = await getDocs(q);
     return snapshot.docs.map(doc => ({
       id: doc.id,
@@ -144,13 +152,13 @@ export const updatePostComments = async (postId, increment) => {
 export const getStories = async (userId = null) => {
   try {
     let q = collection(db, 'stories');
-    
+
     if (userId) {
       q = query(q, where('authorId', '==', userId), orderBy('createdAt', 'desc'));
     } else {
       q = query(q, orderBy('createdAt', 'desc'));
     }
-    
+
     const snapshot = await getDocs(q);
     return snapshot.docs.map(doc => ({
       id: doc.id,
@@ -166,11 +174,11 @@ export const getStoryById = async (storyId) => {
   if (!storyId) {
     throw new Error('Story ID is required');
   }
-  
+
   try {
     const storyRef = doc(db, 'stories', storyId);
     const storySnap = await getDoc(storyRef);
-    
+
     if (storySnap.exists()) {
       return {
         id: storySnap.id,

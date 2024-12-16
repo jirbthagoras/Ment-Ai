@@ -6,14 +6,15 @@ import { useState, useEffect, useCallback } from 'react'
 import { auth } from '../../firebase'
 import { onAuthStateChanged } from 'firebase/auth'
 import PropTypes from 'prop-types'
-import { 
-  getBookedSlots, 
-  saveAppointment, 
-  validateBookingData, 
-  createBookingData 
+import { Link, useLocation } from 'react-router-dom';
+import {
+  getBookedSlots,
+  saveAppointment,
+  validateBookingData,
+  createBookingData
 } from '../../services/consultationService'
-import drchandra from '../../assets/doctor/chandra.png'
-import drveronika from '../../assets/doctor/veronika.png'
+import drchandra from '../../assets/doctor/Chandra.png'
+import drveronika from '../../assets/doctor/Veronika.png'
 import logoBCA from '../../assets/logo/logobca.png'
 import logoGopay from '../../assets/logo/logo-gopay-vector.png'
 import poster from '../../assets/poster.png'
@@ -42,13 +43,13 @@ export default function Konsultasi() {
       { session: 'Sesi Pagi', time: '09:15-10:15' },
       { session: 'Sesi Pagi', time: '10:30-11:30' },
       { session: 'Sesi Pagi', time: '11:45-12:45' },
-      
+
       // Sesi Siang (Afternoon Sessions: 13:00 - 17:00)
       { session: 'Sesi Siang', time: '13:00-14:00' },
       { session: 'Sesi Siang', time: '14:15-15:15' },
       { session: 'Sesi Siang', time: '15:30-16:30' },
       { session: 'Sesi Siang', time: '16:45-17:45' },
-      
+
       // Sesi Malam (Evening Sessions: 18:00 - 21:00)
       { session: 'Sesi Malam', time: '18:00-19:00' },
       { session: 'Sesi Malam', time: '19:15-20:15' },
@@ -59,12 +60,12 @@ export default function Konsultasi() {
       { session: 'Sesi Pagi', time: '08:30-09:30' },
       { session: 'Sesi Pagi', time: '09:45-10:45' },
       { session: 'Sesi Pagi', time: '11:00-12:00' },
-      
+
       // Sesi Siang (Afternoon Sessions: 13:00 - 17:00)
       { session: 'Sesi Siang', time: '13:30-14:30' },
       { session: 'Sesi Siang', time: '14:45-15:45' },
       { session: 'Sesi Siang', time: '16:00-17:00' },
-      
+
       // Sesi Malam (Evening Sessions: 18:00 - 21:00)
       { session: 'Sesi Malam', time: '18:30-19:30' },
       { session: 'Sesi Malam', time: '19:45-20:45' },
@@ -91,24 +92,24 @@ export default function Konsultasi() {
     const firstDay = new Date(year, month, 1)
     const lastDay = new Date(year, month + 1, 0)
     const days = []
-    
+
     // Add previous month's days
     for (let i = 0; i < firstDay.getDay(); i++) {
       const prevDate = new Date(year, month, -i)
       days.unshift({ date: prevDate, isCurrentMonth: false })
     }
-    
+
     // Add current month's days
     for (let i = 1; i <= lastDay.getDate(); i++) {
       days.push({ date: new Date(year, month, i), isCurrentMonth: true })
     }
-    
+
     // Add next month's days to complete the calendar
     const remainingDays = 42 - days.length // 6 rows * 7 days
     for (let i = 1; i <= remainingDays; i++) {
       days.push({ date: new Date(year, month + 1, i), isCurrentMonth: false })
     }
-    
+
     return days
   }
 
@@ -149,15 +150,15 @@ export default function Konsultasi() {
     PaymentSteps.propTypes = {
       currentStep: PropTypes.number.isRequired
     };
-    
+
     return (
       <div className="flex justify-between items-center mb-6">
         {[1, 2, 3].map((step) => (
           <div key={step} className="flex items-center">
             <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-              step === currentStep 
-                ? 'bg-[#1e4287] text-white' 
-                : step < currentStep 
+              step === currentStep
+                ? 'bg-[#1e4287] text-white'
+                : step < currentStep
                   ? 'bg-green-500 text-white'
                   : 'bg-gray-200 text-gray-600'
             }`}>
@@ -183,7 +184,7 @@ export default function Konsultasi() {
 
     const handlePayment = async () => {
       setProcessingPayment(true);
-      
+
       // Simulate payment processing
       setTimeout(() => {
         setProcessingPayment(false);
@@ -207,7 +208,7 @@ export default function Konsultasi() {
 
         const appointmentId = await saveAppointment(bookingData);
         console.log('Appointment saved with ID:', appointmentId);
-        
+
         setProcessingPayment(false);
         setPaymentStep(3);
 
@@ -234,7 +235,7 @@ export default function Konsultasi() {
     };
 
     return (
-      <motion.div 
+      <motion.div
         className="space-y-6"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -281,7 +282,7 @@ export default function Konsultasi() {
               onClick={handlePayment}
               disabled={!selectedPayment || processingPayment}
               className={`w-full py-4 rounded-lg font-semibold ${
-                processingPayment 
+                processingPayment
                   ? 'bg-gray-300'
                   : 'bg-[#1e4287] text-white hover:bg-[#163268]'
               }`}
@@ -319,7 +320,7 @@ export default function Konsultasi() {
               onClick={handlePaymentConfirmation}
               disabled={processingPayment}
               className={`w-full py-4 rounded-lg font-semibold ${
-                processingPayment 
+                processingPayment
                   ? 'bg-gray-300'
                   : 'bg-green-500 text-white hover:bg-green-600'
               }`}
@@ -391,11 +392,11 @@ export default function Konsultasi() {
   // Fetch booked slots
   const fetchBookedSlots = useCallback((selectedDate, selectedDoctor) => {
     if (!selectedDate || !selectedDoctor) return;
-    
+
     try {
       setIsLoading(true);
       setError(null);
-      
+
       const unsubscribe = getBookedSlots(selectedDate, selectedDoctor, (booked) => {
         setBookedSlots(booked);
         setIsLoading(false);
@@ -421,7 +422,7 @@ export default function Konsultasi() {
       return (
         <div className="p-4 bg-red-50 rounded-lg border border-red-200 text-red-700">
           <p>{error}</p>
-          <button 
+          <button
             onClick={() => {
               setError(null);
               // Retry loading booked slots
@@ -452,7 +453,7 @@ export default function Konsultasi() {
           {selectedDoctor && doctorSchedules[selectedDoctor].map((slot, index) => {
             const isBooked = bookedSlots[slot.time]?.isBooked;
             const bookingStatus = bookedSlots[slot.time]?.status;
-            
+
             return (
               <motion.div
                 key={index}
@@ -472,7 +473,7 @@ export default function Konsultasi() {
                     disabled={isBooked}
                     className={`
                       px-4 py-2 rounded-full text-sm font-medium
-                      ${isBooked 
+                      ${isBooked
                         ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
                         : selectedTimes.includes(slot.time)
                           ? 'bg-[#1e4287] text-white'
@@ -480,7 +481,7 @@ export default function Konsultasi() {
                       }
                     `}
                   >
-                    {isBooked 
+                    {isBooked
                       ? `Terpesan${bookingStatus ? ` (${bookingStatus})` : ''}`
                       : selectedTimes.includes(slot.time)
                         ? 'Terpilih'
@@ -514,11 +515,11 @@ export default function Konsultasi() {
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ 
+                transition={{
                   duration: 0.6,
                   ease: "easeOut"
                 }}
-                whileHover={{ 
+                whileHover={{
                   y: -5,
                   transition: { duration: 0.2 }
                 }}
@@ -536,7 +537,7 @@ export default function Konsultasi() {
                   {/* Gradient Overlay */}
                   <div className="absolute inset-0 bg-gradient-to-t from-[#1e4287] via-[#1e4287]/70 to-transparent" />
                 </div>
-                
+
                 {/* Content */}
                 <div className="absolute bottom-0 left-0 right-0 p-8 text-white">
                   <h3 className="text-2xl font-bold mb-3">dr. Chandra Sp.Kj</h3>
@@ -552,12 +553,12 @@ export default function Konsultasi() {
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ 
+                transition={{
                   duration: 0.6,
                   ease: "easeOut",
                   delay: 0.2
                 }}
-                whileHover={{ 
+                whileHover={{
                   y: -5,
                   transition: { duration: 0.2 }
                 }}
@@ -575,7 +576,7 @@ export default function Konsultasi() {
                   {/* Gradient Overlay */}
                   <div className="absolute inset-0 bg-gradient-to-t from-[#1e4287] via-[#1e4287]/70 to-transparent" />
                 </div>
-                
+
                 {/* Content */}
                 <div className="absolute bottom-0 left-0 right-0 p-8 text-white">
                   <h3 className="text-2xl font-bold mb-3">dr. Veronika, Sp.Kj</h3>
@@ -592,25 +593,26 @@ export default function Konsultasi() {
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
-              transition={{ 
+              transition={{
                 duration: 0.5,
                 ease: "easeOut"
               }}
-              whileHover={{ 
+              whileHover={{
                 scale: 1.02,
                 transition: { duration: 0.2 }
               }}
               className="bg-white rounded-[32px] p-6 shadow-lg mt-8"
             >
-              <div className="flex items-center justify-center">
+              <div className="flex items-center justify-center text">
                 <img
                   src={poster}
                   alt="Promotional Banner"
                   className="w-full h-48 rounded-lg object-cover"
                 />
               </div>
+              <Link to="/diagnose">To Diagnose Page</Link>
               <h3 className="text-center text-xl font-bold mt-4 text-[#1e4287]">
-                DAPATKAN DISCOUNT 50% UNTUK KONSULTASI PERTAMA
+
               </h3>
             </motion.div>
 
@@ -631,11 +633,11 @@ export default function Konsultasi() {
                 <div className="flex items-center justify-between mb-6">
                   <h3 className="text-2xl font-bold">Ayo bergabung dengan komunitas kami!</h3>
                   <motion.div
-                    animate={{ 
+                    animate={{
                       scale: [1, 1.2, 1],
                       rotate: [0, 5, -5, 0]
                     }}
-                    transition={{ 
+                    transition={{
                       duration: 2,
                       repeat: Infinity,
                       repeatType: "reverse"
@@ -744,13 +746,13 @@ export default function Konsultasi() {
                     {formatDate(currentMonth).month} {currentMonth.getFullYear()}
                   </h3>
                   <div className="flex gap-2">
-                    <button 
+                    <button
                       onClick={() => navigateMonth(-1)}
                       className="p-2 rounded-full hover:bg-gray-100 transition-colors"
                     >
                       <FaChevronLeft className="text-[#1e4287]" />
                     </button>
-                    <button 
+                    <button
                       onClick={() => navigateMonth(1)}
                       className="p-2 rounded-full hover:bg-gray-100 transition-colors"
                     >
@@ -766,9 +768,9 @@ export default function Konsultasi() {
                       {day}
                     </div>
                   ))}
-                  
+
                   {getDaysInMonth(currentMonth).map(({ date, isCurrentMonth }, index) => {
-                    const isSelected = selectedDate && 
+                    const isSelected = selectedDate &&
                       date.getDate() === selectedDate.getDate() &&
                       date.getMonth() === selectedDate.getMonth()
 
@@ -777,12 +779,12 @@ export default function Konsultasi() {
                         key={`date-${index}`}
                         initial={{ opacity: 0, scale: 0.9 }}
                         animate={{ opacity: 1, scale: 1 }}
-                        transition={{ 
+                        transition={{
                           duration: 0.3,
                           delay: index * 0.02,
                           ease: "easeOut"
                         }}
-                        whileHover={{ 
+                        whileHover={{
                           scale: 1.1,
                           transition: { duration: 0.2 }
                         }}
@@ -815,7 +817,7 @@ export default function Konsultasi() {
                   transition={{ duration: 0.5 }}
                 >
                   <p className="text-lg">
-                    {!selectedDoctor 
+                    {!selectedDoctor
                       ? 'Silakan pilih dokter terlebih dahulu'
                       : !selectedDate
                       ? 'Silakan pilih tanggal konsultasi'

@@ -12,27 +12,27 @@ const groq = new Groq({ apiKey: import.meta.env.VITE_GROQ_KEY, dangerouslyAllowB
 // Add animation variants
 const containerVariants = {
   hidden: { opacity: 0 },
-  visible: { 
+  visible: {
     opacity: 1,
-    transition: { 
+    transition: {
       duration: 0.5,
-      staggerChildren: 0.1 
+      staggerChildren: 0.1
     }
   }
 };
 
 const messageVariants = {
   hidden: { opacity: 0, y: 20 },
-  visible: { 
-    opacity: 1, 
+  visible: {
+    opacity: 1,
     y: 0,
     transition: {
       type: "spring",
       stiffness: 100
     }
   },
-  exit: { 
-    opacity: 0, 
+  exit: {
+    opacity: 0,
     y: -20,
     transition: { duration: 0.2 }
   }
@@ -71,7 +71,7 @@ export default function AiPage() {
         setIsTalking(false);
         const response = await groq.chat.completions.create({
           messages: [
-            { role: "system", content: "Bayangkan dirimu adalah seorang dokter psikiater yang bijaksana berwujud seekor burung hantu. Namamu adalah Dr. Men, dan kau memiliki sayap penuh kasih serta mata yang tajam dan penuh perhatian. Kau tinggal di sebuah ruang praktik yang hangat dan nyaman di dalam sebuah pohon besar, tempat pasien-pasienmu datang untuk bercerita dan mencurahkan isi hati. Kau sangat mencintai pekerjaanmu sebagai pendengar yang baik, memberikan nasihat yang lembut namun bermakna, serta membantu mereka menemukan ketenangan. Gunakan bahasa Indonesia yang baik dan benar saat berbicara, sehingga setiap pasien merasa dihargai dan dipahami." },
+            { role: "system", content: "Bayangkan dirimu adalah seorang dokter psikiater yang bijaksana berwujud seekor burung hantu. Namamu adalah Dr. Men, dan kau memiliki sayap penuh kasih serta mata yang tajam dan penuh perhatian. Kau tinggal di sebuah ruang praktik yang hangat dan nyaman di dalam sebuah pohon besar, tempat pasien-pasienmu datang untuk bercerita dan mencurahkan isi hati. Kau sangat mencintai pekerjaanmu sebagai pendengar yang baik, memberikan nasihat yang lembut namun bermakna, serta membantu mereka menemukan ketenangan. Gunakan bahasa Indonesia yang baik dan benar saat berbicara, sehingga setiap pasien merasa dihargai dan dipahami. Juga, jangan lupa untuk berikan tanggapan dengan bahasa yang sopan dan tidak negatif" },
             ...newMessages.map((msg) => ({
               role: msg.sender === "Dr. Men" ? "assistant" : "user",
               content: msg.text,
@@ -81,7 +81,7 @@ export default function AiPage() {
         });
 
         const aiReply = response.choices[0]?.message?.content || "Maaf, saya tidak bisa merespon saat ini.";
-        
+
         // Start talking animation
         setIsTalking(true);
         setIsTyping(false);
@@ -132,7 +132,7 @@ export default function AiPage() {
             animate="visible"
             className="bg-white/10 backdrop-blur-lg rounded-2xl p-4 sm:p-6 shadow-xl w-full max-w-xl order-2 lg:order-1"
           >
-            <div 
+            <div
               id="chat-container"
               className="space-y-4 max-h-[50vh] sm:max-h-[60vh] overflow-y-auto mb-4 scrollbar-thin scrollbar-thumb-white/20 scrollbar-track-transparent"
             >
@@ -168,7 +168,7 @@ export default function AiPage() {
                   </motion.div>
                 ))}
               </AnimatePresence>
-              
+
               {isTyping && (
                 <motion.div
                   initial={{ opacity: 0, y: 10 }}
@@ -244,7 +244,7 @@ export default function AiPage() {
                 src={isTalking ? talkani : idleani}
                 alt="Dr. Men - Owl Doctor Character"
                 className="w-[200px] sm:w-full max-w-md mx-auto bg-transparent object-contain rounded-3xl shadow-xl"
-                style={{ 
+                style={{
                   backgroundColor: 'transparent',
                   objectFit: 'contain',
                 }}

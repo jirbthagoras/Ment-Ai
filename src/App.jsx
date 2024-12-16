@@ -26,6 +26,7 @@ import { AuthProvider } from './contexts/AuthContext';
 import PostDetail from './pages/komunitas/group/PostDetail';
 import UserChat from './pages/konsultasi/user/UserChat';
 import ArtikelPage from './pages/ArtikelPage';
+import Diagnose from './pages/AiDiagnose/Diagnose';
 
 
 
@@ -45,12 +46,12 @@ const AdminRoute = ({ children }) => {
       try {
         const userDocRef = doc(db, 'users', user.uid);
         const userDoc = await getDoc(userDocRef);
-        
+
         if (userDoc.exists()) {
           const userData = userDoc.data();
-          setAuthState({ 
+          setAuthState({
             isAdmin: userData.isAdmin === true,
-            loading: false 
+            loading: false
           });
         } else {
           setAuthState({ isAdmin: false, loading: false });
@@ -99,21 +100,27 @@ function App() {
           <Route path="/complete-profile" element={<ComProfile/>} />
           <Route path="/Konsultasi" element={<Konsultasi/>}/>
           <Route path="/ruang-konsultasi-user/:appointmentId" element={<RuangKonsultasiUser />} />
-          <Route 
+          <Route
             path="/admin"
             element={
               <AdminRoute>
                 <Admin />
               </AdminRoute>
-            } 
+            }
           />
-          <Route 
+          <Route
+            path="/diagnose"
+            element={
+              <Diagnose />
+            }
+          />
+          <Route
             path="/ruang-konsultasi/:appointmentId"
             element={
               <AdminRoute>
                 <RuangKonsultasi />
               </AdminRoute>
-            } 
+            }
           />
           <Route path="/aipage" element={<AiPage />} />
           <Route path="/profile" element={<Profile />} />
